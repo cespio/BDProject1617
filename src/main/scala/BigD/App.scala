@@ -1,5 +1,6 @@
 package BigD
 import org.apache.spark.graphx.{Edge, Graph, VertexId}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.util.matching.Regex
@@ -17,12 +18,12 @@ object App {
     println("Give me the sizethr -> ")
     val size=Console.readInt()
     //val conf = new SparkConf().setAppName("Simple Application")
-    val conf = new SparkConf().setAppName("BigD").setMaster("local[2]")
+    val conf = new SparkConf().setAppName("BigD").setMaster("local[4]")
     val sc = new SparkContext(conf)
     var graph=builtGraphfromFile("data/graphGenOut0.dot",sc)
-    //val frequentO=new FrequentSubG(graph,thr,size)
-    frequentEdges(graph,thr)
-    //frequentO.frequentEdges(thr)
+    val frequentO=new FrequentSubG(graph,thr,size)
+    //frequentEdges(graph,thr)
+    val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
     //main loop of the algorithm
 
 
@@ -54,12 +55,6 @@ object App {
     return graph
   }
 
-  def frequentEdges(graph: Graph[String,String],thr:Int): Unit ={
-    //si potrebbe applicare anche qui un principio di map reduce
-    val temp = graph.triplets.map(tr => ((tr.srcAttr,tr.dstAttr,tr.attr),1))
-    val temp1 = temp.reduceByKey( (a,b) => a+b)
-    temp1.collect.foreach(println(_))
-    /**/
-  }
+
 
 }
