@@ -59,7 +59,7 @@ object App {
     val temp = graph.triplets.map(tr => ((tr.srcAttr,tr.dstAttr,tr.attr),1))
     val temp1 = temp.reduceByKey( (a,b) => a+b)
     temp1.collect.foreach(println(_))
-
+    /**/
   }
 
 }
