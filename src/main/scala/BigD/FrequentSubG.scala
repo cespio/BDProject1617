@@ -3,6 +3,8 @@ package BigD
 import org.apache.spark.graphx.Graph
 import org.apache.spark.rdd.RDD
 
+
+
 /**
   * Created by francesco on 02/03/17.
   */
@@ -23,7 +25,7 @@ class FrequentSubG (graph_arg: Graph[String,String],thr_arg:Int,size_arg:Int) ex
 
   def candidateGeneration(freQE: RDD[(String,String,String)]) ={
     val temp1 =freQE.cartesian(freQE).filter( el => el._1 != el._2 && boolCondition(el._1,el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt)<=4)
-    temp1.collect.foreach(println(_))
+    val temp2 = temp1.map( el => contructTheGraph(el))
   }
 
   def boolCondition(arc1: (String,String,String), arc2: (String,String,String)): Boolean = {
@@ -32,5 +34,9 @@ class FrequentSubG (graph_arg: Graph[String,String],thr_arg:Int,size_arg:Int) ex
       ret=true
     }
     return ret
+  }
+
+  def constructTheGraph(couple: ((String,String,String),(String,String,String))) ={
+    //sfruttare i dizionari
   }
 }

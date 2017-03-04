@@ -54,6 +54,11 @@
       <artifactId>spark-graphx_2.10</artifactId>
       <version>2.1.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.scala-graph</groupId>
+      <artifactId>graph-core_2.12</artifactId>
+      <version>1.11.4</version>
+    </dependency>
 
   </dependencies>
 
