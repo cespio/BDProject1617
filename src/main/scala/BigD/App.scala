@@ -24,12 +24,20 @@ object App {
     val frequentO=new FrequentSubG(graph,thr,size)
     //frequentEdges(graph,thr)
     val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
+    frequentO.candidateGeneration(frequentEdges)
     //main loop of the algorithm
-
+    //construction of candidates
+    //DFSCode
+    //CSP
 
 
   }
+  //Construction of the candidate
 
+
+
+
+  //Construct the graph from the file
   def builtGraphfromFile(fileName :String,sc :SparkContext): Graph[String,String] ={
     var vertices=Array[(VertexId,(String))]()
     var edges=Array[Edge[String]]()
