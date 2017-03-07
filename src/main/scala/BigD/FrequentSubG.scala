@@ -25,7 +25,8 @@ class FrequentSubG (graph_arg: Graph[String,String],thr_arg:Int,size_arg:Int) ex
 
   def candidateGeneration(freQE: RDD[(String,String,String)]) ={
     val temp1 =freQE.cartesian(freQE).filter( el => el._1 != el._2 && boolCondition(el._1,el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt)<=4)
-    val temp2 = temp1.map( el => contructTheGraph(el))
+    val temp2 = temp1.map( el => constructTheGraph(el))
+    //temp2.collect.foreach(println(_))
   }
 
   def boolCondition(arc1: (String,String,String), arc2: (String,String,String)): Boolean = {
@@ -36,7 +37,17 @@ class FrequentSubG (graph_arg: Graph[String,String],thr_arg:Int,size_arg:Int) ex
     return ret
   }
 
-  def constructTheGraph(couple: ((String,String,String),(String,String,String))) ={
+  def constructTheGraph(couple: ((String,String,String),(String,String,String))):collection.mutable.Map[String,List[(String,String)]] ={
     //sfruttare i dizionari
+    var graph_dict=collection.mutable.Map[String,List[(String,String)]]()
+    graph_dict+=(couple._1._1 -> List((couple._1._2,couple._1._3)))
+    //tanto matcha sicuro
+    if(graph_dict.keys.toList.contains(couple._2._1)){
+      graph_dict=graph_dict.updated(couple._2._1, graph_dict(couple._2._1).:+ ((couple._2._2,couple._2._3)))
+    }
+    else{
+      graph_dict+=(couple._2._1 -> List((couple._2._2,couple._2._3)))
+    }
+    return graph_dict
   }
 }
