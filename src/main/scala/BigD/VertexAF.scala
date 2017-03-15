@@ -17,9 +17,10 @@ class VertexAF (id:String) extends Serializable{
 
   //override def toString: String = super.toString
   def toPrint() {
-    printf("Vertex "+vid+" adjencyList ->\n")
+    printf("\nVertex "+vid+" adjencyList -> ")
     for(el <- adjencies){
-      printf(el._1.vid+" h: "+el._2)
+      printf(" "+el._1.vid+" h: "+el._2+" ")
     }
+    printf("\n")
   }
 }
