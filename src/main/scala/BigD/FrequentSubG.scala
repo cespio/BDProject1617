@@ -27,7 +27,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
   def candidateGeneration(freQE: RDD[(String, String, String)]) = {
     val temp1 = freQE.cartesian(freQE).filter(el => el._1 != el._2 && boolCondition(el._1, el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt) <= 4)
     val temp2 = temp1.map(el => constructTheGraph(el)).map(el => makeItUndirect(el))
-    temp2.collect().foreach(el => el.toPrinit())
+    temp2.collect()
   }
 
   def boolCondition(arc1: (String, String, String), arc2: (String, String, String)): Boolean = {
@@ -38,6 +38,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     return ret
   }
 
+  //TODO verificare la completezza, genera tutti i candidati possibili?
   def constructTheGraph(couple: ((String, String, String), (String, String, String))): MyGraph = {
     var G = new MyGraph()
     if ((couple._1._1 == couple._2._2) && (couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2)) {
@@ -88,6 +89,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     return G
   }
 
+  //TODO gestire gli strugglers
   def makeItUndirect(inGraph:MyGraph): MyGraph={
     /*E' possibile che in input arrivino dei grafi vuoti -> nella creazione vengono creati prima*/
    // println("Grafo orientato ")
@@ -97,11 +99,12 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     var S:VertexAF=null;
     var D:VertexAF=null;
     var nodes=inGraph.nodes
-    for(el <- nodes){ /*mi prendo i nodi, poi per ogni nodo mi prendo un arco*/
+    for(el <- nodes) {
+      /*mi prendo i nodi, poi per ogni nodo mi prendo un arco*/
       //println("Esamindando "+el.vid)
-      un_G.toPrinit()
-      if(un_G.nodes.count(f => f.vid == el.vid)>=1){
-        S=un_G.nodes.filter(f => f.vid==el.vid).head
+      //un_G.toPrinit()
+      if (un_G.nodes.count(f => f.vid == el.vid) >= 1) {
+        S = un_G.nodes.filter(f => f.vid == el.vid).head
         //println("Trovato S -> "+el.vid)
       }
       else {
@@ -109,10 +112,11 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
         //println("Creo S -> "+el.vid)
         un_G.addNode(S)
       }
-      for(el1 <- el.adjencies){ /*occhio caso cicli*/
+      for (el1 <- el.adjencies) {
+        /*occhio caso cicli*/
         //println("Trovo "+el1._1.vid)
-        if(un_G.nodes.count(f => f.vid == el1._1.vid)>=1){
-          D=un_G.nodes.filter(f => f.vid==el1._1.vid).head
+        if (un_G.nodes.count(f => f.vid == el1._1.vid) >= 1) {
+          D = un_G.nodes.filter(f => f.vid == el1._1.vid).head
           //println("Trovato D -> "+el1._1.vid)
         }
         else {
@@ -120,11 +124,16 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
           //println("Creo D -> " + el1._1.vid)
           un_G.addNode(D)
         }
-        if(S!=null && D!=null){
+        if (S != null && D != null) {
           S.addEdge(D, el1._2)
           D.addEdge(S, el1._2)
         }
       }
+    }
+    //var app=un_G.nodes.head
+    //un_G.DFSVisit(app)
+    if(un_G.nodes.length!=0){
+      un_G.minDFS()
     }
     return un_G
   }
