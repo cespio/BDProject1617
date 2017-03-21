@@ -27,7 +27,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
   def candidateGeneration(freQE: RDD[(String, String, String)]) = {
     val temp1 = freQE.cartesian(freQE).filter(el => el._1 != el._2 && boolCondition(el._1, el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt) <= 4)
     val temp2 = temp1.map(el => constructTheGraph(el)).map(el => makeItUndirect(el))
-    temp2.collect()
+    //temp2.collect().foreach()
   }
 
   def boolCondition(arc1: (String, String, String), arc2: (String, String, String)): Boolean = {
@@ -90,7 +90,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
   }
 
   //TODO gestire gli strugglers
-  def makeItUndirect(inGraph:MyGraph): MyGraph={
+  def makeItUndirect(inGraph:MyGraph): (MyGraph,String)={
     /*E' possibile che in input arrivino dei grafi vuoti -> nella creazione vengono creati prima*/
    // println("Grafo orientato ")
     //inGraph.toPrinit()
@@ -132,9 +132,10 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     }
     //var app=un_G.nodes.head
     //un_G.DFSVisit(app)
+    var code=""
     if(un_G.nodes.length!=0){
-      un_G.minDFS()
+      code=un_G.minDFS()
     }
-    return un_G
+    return (un_G,code)
   }
 }

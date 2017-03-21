@@ -34,42 +34,123 @@ class MyGraph() extends  Serializable{
   }
 
   /*Label uniche -> unica visita DFS*/
-  def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)]) {
+  def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)]): Int= {
+    var ntime=0
     discovery(node.vid)=time
-    println("Sono in -> "+node.vid)
+    ntime=time
+    //println("Sono in -> "+node.vid)
     var sorted_neighb=node.adjencies.sortBy(el=>el._1.vid)
-    sorted_neighb.foreach(el => println(el._1.vid))
+    //sorted_neighb.foreach(el => println(el._1.vid))
     for(cand <- sorted_neighb){
       if(!discovery.keys.exists(p => p==cand._1.vid)) {
-        println("Ho scoperto -> "+cand._1.vid)
-        discovery(cand._1.vid) = time
+
+        //println("Ho scoperto -> "+cand._1.vid)
+        discovery(cand._1.vid) = ntime
         couple.+=:(node.vid,cand._1.vid) //padre-> figlio
         couple.+=:(cand._1.vid,node.vid) //padre-> figlio
-        visit.+=:((time, time + 1, node.vid, cand._2, cand._1.vid))
-        DFS(discovery, cand._1,time+1,visit,couple)
+        visit.+=:((ntime, ntime + 1, node.vid, cand._2, cand._1.vid))
+        ntime=DFS(discovery, cand._1,ntime+1,visit,couple)
       }
       else{
         if(!couple.contains(node.vid,cand._1.vid)){
-          println("BACKTRACCKKK")
           visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
         }
       }
 
     }
+    return time
   }
 
-  def minDFS(): Unit ={
+  def minDFS(): String ={
     var source=this.nodes.sortBy(el=>el.vid).head
-    println("NEW FUCKING VISIT")
+    //println("NEW FUCKING VISIT")
     var visit=DFSVisit(source)
-    var sortedVisit=mergeSorted(visit)
-    //TODO sorting between backedges/frontedges
+    mergeSorted(visit,0,visit.length-1)
+    var s=visitToString(visit)
+    //println("\nDFSCODE -> "+s)
+    return s
 
   }
 
-  /*def mergeSorted(visit:MutableList[(Int,Int,String,String,String)]): Unit ={
 
-  }*/
+  //Ordine lessicografico non viene utilizzato -> quindi solo sorting con backedges and frontedges
+  def mergeSorted(visit:MutableList[(Int,Int,String,String,String)],head:Int,tail:Int) {
+    if(head<tail) {
+      var mid = (head + tail) / 2
+      mergeSorted(visit,head,mid)
+      mergeSorted(visit,mid+1,tail)
+      merge(visit,head,mid,tail)
+    }
+
+  }
   /*unique source point -> sorting the list*/
+  def merge(visit:MutableList[(Int,Int,String,String,String)],head:Int,mid:Int,tail:Int): Unit ={
+    var i=head;
+    var j=mid+1;
+    var app:MutableList[(Int,Int,String,String,String)]=MutableList.empty[(Int,Int,String,String,String)]
+    while(i<=mid && j<=tail){
+      if(confrontEdges(visit.get(i).head,visit.get(j).head)){
+        app:+=visit(i)
+        i+=1
+      }
+      else{
+        app:+=visit(j)
+        j+=1
+      }
+    }
+    while(i<=mid) {
+      app:+=visit(i)
+      i += 1
+    }
+    while(j<=tail) {
+      app:+=visit(j)
+      j += 1
+    }
+    var k=head
+    while(k<=tail) {
+      visit(k) = app(k - head)
+      k += 1
+    }
 
+  }
+  //TODO Risolvere condizione con TODO || Junit to Boolean
+  def confrontEdges(a:(Int,Int,String,String,String),b:(Int,Int,String,String,String)): Boolean = {
+    if (a._1 < a._2 && b._1 < b._2 && a._2 < b._2) {
+      //forwardedges
+      return true;
+    }
+    /*if (a._1 > a._2 && b._1 > b._2) {
+      if (a._1 < b._1 || a._1 == b._1){ //&& a._2 < b._2) {
+        return true;
+      }
+    }*/
+    else {
+      if (a._1 > a._2 && b._1 < b._2) {
+        //A backedges and B forwardedges
+        if (a._1 < b._2) {
+          return true;
+        }
+        else {
+          if (a._1 < a._2 && b._1 > b._2) {
+            //#A forwardedges and B backedges
+            if (a._2 <= b._1) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+  }
+
+  def visitToString(mutableList: MutableList[(Int,Int,String,String,String)]):String ={
+    var str=""
+    for(el <- mutableList){
+        str = str+""+el._1+el._2+el._3+el._4+el._5
+
+    }
+    return str
+  }
 }
+
+
