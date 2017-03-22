@@ -12,14 +12,20 @@ class MyGraph() extends  Serializable{
     nodes+:= el
   }
 
-  def toPrinit() {
-    for(el <- nodes){
-      el.toPrint()
-    }
+  def minDFS(strugglers:MutableList[(String,String)],inG:MutableList[VertexAF]): String ={
+    var source=this.nodes.sortBy(el=>el.vid).head
+    //println("NEW FUCKING VISIT")
+    var visit=DFSVisit(source,strugglers,inG)
+    mergeSorted(visit,0,visit.length-1)
+    var s=visitToString(visit)
+    //println("\nDFSCODE -> "+s)
+    return s
+
   }
 
+
   //TODO verificare correttezza
-  def DFSVisit(source: VertexAF): MutableList[(Int,Int,String,String,String)] ={
+  def DFSVisit(source: VertexAF,strugglers: MutableList[(String,String)],inG:MutableList[VertexAF]): MutableList[(Int,Int,String,String,String)] ={
     /*Deve ritornare una lista di edges */
     var visit: MutableList[(Int,Int,String,String,String)]=MutableList.empty[(Int,Int,String,String,String)]
     var time=0
@@ -27,14 +33,14 @@ class MyGraph() extends  Serializable{
     var couple= MutableList.empty[(String,String)]
     discovery(source.vid)=time
     println("INIZIO DA "+source.vid)
-    DFS(discovery,source,time,visit,couple)
+    DFS(discovery,source,time,visit,couple,strugglers,inG)
     print(visit.mkString("\n"))
     return visit
 
   }
 
   /*Label uniche -> unica visita DFS*/
-  def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)]): Int= {
+  def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)],strugglers: MutableList[(String,String)],inG: MutableList[VertexAF]): Int= {
     var ntime=0
     discovery(node.vid)=time
     ntime=time
@@ -43,33 +49,36 @@ class MyGraph() extends  Serializable{
     //sorted_neighb.foreach(el => println(el._1.vid))
     for(cand <- sorted_neighb){
       if(!discovery.keys.exists(p => p==cand._1.vid)) {
-
         //println("Ho scoperto -> "+cand._1.vid)
         discovery(cand._1.vid) = ntime
         couple.+=:(node.vid,cand._1.vid) //padre-> figlio
         couple.+=:(cand._1.vid,node.vid) //padre-> figlio
         visit.+=:((ntime, ntime + 1, node.vid, cand._2, cand._1.vid))
-        ntime=DFS(discovery, cand._1,ntime+1,visit,couple)
+        ntime=DFS(discovery, cand._1,ntime+1,visit,couple,strugglers,inG)
       }
       else{
-        if(!couple.contains(node.vid,cand._1.vid)){
-          visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
+        if(!couple.contains(node.vid,cand._1.vid) && !couple.contains(cand._1.vid,node.vid)){
+          couple.+=:(node.vid,cand._1.vid) //padre-> figlio
+          couple.+=:(cand._1.vid,node.vid) //padre-> figlio
+          /*Devo verificare se forwared edges o backedges nel grafo originale*/
+          //Non ho però il riferimento al grafo originale
+          var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el => el._1.vid==cand._1.vid)
+          if(adJAtt.length>0){
+            visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
+          }
+          else{
+            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
+          }
+        }
+        else{
+          if(strugglers.contains(cand._1.vid,node.vid)){
+            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
+          }
         }
       }
 
     }
     return time
-  }
-
-  def minDFS(): String ={
-    var source=this.nodes.sortBy(el=>el.vid).head
-    //println("NEW FUCKING VISIT")
-    var visit=DFSVisit(source)
-    mergeSorted(visit,0,visit.length-1)
-    var s=visitToString(visit)
-    //println("\nDFSCODE -> "+s)
-    return s
-
   }
 
 
@@ -150,6 +159,13 @@ class MyGraph() extends  Serializable{
 
     }
     return str
+  }
+
+
+  def toPrinit() {
+    for(el <- nodes){
+      el.toPrint()
+    }
   }
 }
 
