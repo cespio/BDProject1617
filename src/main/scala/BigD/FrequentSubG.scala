@@ -30,6 +30,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     val temp1 = freQE.cartesian(freQE).filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt) <= 4)
     val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length>0).map(el => makeItUndirect(el))
     temp2.collect()
+    //Possibile ritorno del RDD
   }
 
   def boolCondition(arc1: (String, String, String), arc2: (String, String, String)): Boolean = {
@@ -42,13 +43,13 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
 
   def constructTheGraph(couple: ((String, String, String), (String, String, String))): mutable.MutableList[MyGraph] = {
     var G = new MyGraph()
-    println("CANDIDATI "+couple)
+    //println("CANDIDATI "+couple)
     var listRis:mutable.MutableList[MyGraph]=mutable.MutableList.empty[MyGraph]
-    print("CASO 1")
+    //print(" CASO 1 ")
     //f ((fEdgesSet[i][0] == fEdgesSet[j][1]) and (fEdgesSet[i][1] == fEdgesSet [j][0]) and (fEdgesSet[i][0] != fEdgesSet [i][1]) and (fEdgesSet[j][0] != fEdgesSet [j][1])):
     if ((couple._1._1 == couple._2._2) && (couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2)) {
       //cycle
-      print("IN CASO 1")
+      //print(" IN CASO 1 ")
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._2._2)
       G = new MyGraph()
@@ -59,25 +60,25 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
       listRis:+=(G)
 
     }
-    print("CASO 2")
-    //if ((fEdgesSet[i][1] == fEdgesSet[j][1]) and (fEdgesSet[i][0] != fEdgesSet[i][1]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][1]) ):
+    //print(" CASO 2 ")
+    //((fEdgesSet[i][1] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][1]) ):
     if ((couple._1._2 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._2 != couple._2._1) && (couple._1._1 != couple._2._1) && (couple._1._1 != couple._2._2)) {
-      print("IN CASO 2")
+      //print(" IN CASO 2 ")
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
       G = new MyGraph()
-      V0.addEdge(V1, couple._2._3)
+      V0.addEdge(V2, couple._2._3)
       V1.addEdge(V2, couple._1._3)
       G.addNode(V0)
       G.addNode(V1)
       G.addNode(V2)
       listRis:+=(G)
     }
-    print("CASO 3")
-    // if ((fEdgesSet[i][0] == fEdgesSet[j][1]) and (fEdgesSet[i][0] != fEdgesSet[i][1]) and (fEdgesSet[i][0] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
+    //print(" CASO 3 ")
+    // ((fEdgesSet[i][0] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][0])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._1) && (couple._1._2 !=  couple._2._1) && (couple._1._2 !=  couple._2._2)){
-      print("IN CASO 3")
+      //print(" IN CASO 3 ")
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
@@ -90,24 +91,24 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
       listRis:+=(G)
 
     }
-    print("CASO 4")
-    // if ((fEdgesSet[i][0] == fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[i][1]) and (fEdgesSet[i][0] != fEdgesSet[j][1]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
+    //print(" CASO 4 ")
+    // ((fEdgesSet[i][0] == fEdgesSet[j][0]) (fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][1]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._2) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2) ){
-      print("IN CASO 4")
-      var V0 = new VertexAF(couple._2._1)
-      var V1 = new VertexAF(couple._1._1)
-      var V2 = new VertexAF(couple._1._2)
+      //print(" IN CASO 4 ")
+      var V0 = new VertexAF(couple._1._1)
+      var V1 = new VertexAF(couple._1._2)
+      var V2 = new VertexAF(couple._2._2)
       var G = new MyGraph()
       V0.addEdge(V1,couple._1._3)
-      V1.addEdge(V2,couple._2._3)
+      V0.addEdge(V2,couple._2._3)
       G.addNode(V0)
       G.addNode(V1)
       G.addNode(V2)
       listRis:+=(G)
     }
-    printf("CASO 5")
-    if ((couple._1._2==couple._2._1) ){
-      print("IN CASO 5")
+    //printf(" CASO 5")
+    if ((couple._1._2==couple._2._1) && (couple._1._1!=couple._1._2) && (couple._2._1!=couple._2._2) && (couple._1._1!=couple._2._1) && (couple._1._1!=couple._2._2)){
+      //print(" IN CASO 5")
       var V0 = new VertexAF(couple._1._1)
       var V1 = new VertexAF(couple._1._2)
       var V2 = new VertexAF(couple._2._2)
@@ -119,15 +120,14 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
       G.addNode(V2)
       listRis:+=(G)
     }
-    println("RIS OBTAINED")
+    /**println(" RIS OBTAINED ")
     for(el <- listRis){
-      println("NEXT")
+      println("NEXT #")
       println(el.toPrinit())
-    }
+    }*/
     return listRis
   }
 
-  //TODO gestire gli strugglers per i cicli
   def makeItUndirect(inGraph:MyGraph): (MyGraph,String)={
    // println("Grafo orientato ")
     //inGraph.toPrinit()
@@ -190,45 +190,8 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
       code=un_G.minDFS(strugglers,inGraph.nodes.clone())
       println("DFSCODE "+code)
     }
-    return (un_G,code)
+    //**ASSEGNAMENTO del DFSCODE al grafo in input*//
+    inGraph.dfscode=code
+    return inGraph
   }
 }
-
-/*
-*
-* i
-                 graphLabel1={'v0':str(fEdgesSet[i][0]),'v1':str(fEdgesSet[i][1])}
-                 graph1={'v0':[('v1', str(fEdgesSet[i][2]))], 'v1':[('v0', str(fEdgesSet[j][2]))]}
-                 if(abs(int(fEdgesSet[i][2]) - int(fEdgesSet[j][2])) <=4):
-                     R=DFSmod.minDFS(graph1,graphLabel1) #use of the DFScode to check the presence of repetitions
-                     if(R not in dfscode):
-                        result.append((graph1,graphLabel1,(min(int(fEdgesSet[i][2]),int(fEdgesSet[j][2])),max(int(fEdgesSet[i][2]),int(fEdgesSet[j][2]))),R))
-                        dfscode.add(R)
-
-
-                 graphLabel1={'v0':str(fEdgesSet[i][1]),'v1':str(fEdgesSet[i][0]), 'v2':str(fEdgesSet[j][0])}
-                 graph1={'v0':[], 'v1':[('v0', str(fEdgesSet[i][2]))], 'v2':[('v0', str(fEdgesSet[j][2]))]}
-                 if(abs(int(fEdgesSet[i][2]) - int(fEdgesSet[j][2])) <=4):
-                     R=DFSmod.minDFS(graph1,graphLabel1)
-                     if(R not in dfscode):
-                        result.append((graph1,graphLabel1,(min(int(fEdgesSet[i][2]),int(fEdgesSet[j][2])),max(int(fEdgesSet[i][2]),int(fEdgesSet[j][2]))),R))
-                        dfscode.add(R)
-
-                 graphLabel1={'v0':str(fEdgesSet[j][0]),'v1':str(fEdgesSet[i][0]), 'v2':str(fEdgesSet[i][1])}
-                 graph1={'v0':[('v1', str(fEdgesSet[j][2]))], 'v1':[('v2', str(fEdgesSet[i][2]))], 'v2':[]}
-                 if(abs(int(fEdgesSet[i][2]) - int(fEdgesSet[j][2])) <=4):
-                     R=DFSmod.minDFS(graph1,graphLabel1)
-                     if(R not in dfscode):
-                        result.append((graph1,graphLabel1,(min(int(fEdgesSet[i][2]),int(fEdgesSet[j][2])),max(int(fEdgesSet[i][2]),int(fEdgesSet[j][2]))),R))
-                        dfscode.add(R)
-
-                 graphLabel1={'v0':str(fEdgesSet[i][0]),'v1':str(fEdgesSet[i][1]), 'v2':str(fEdgesSet[j][1])}
-                 graph1={'v0':[('v1', str(fEdgesSet[i][2])), ('v2', str(fEdgesSet[j][2]))], 'v1':[], 'v2':[]}
-                 if(abs(int(fEdgesSet[i][2]) - int(fEdgesSet[j][2])) <=4):
-                     R=DFSmod.minDFS(graph1,graphLabel1)
-                     if(R not in dfscode):
-                        result.append((graph1,graphLabel1,(min(int(fEdgesSet[i][2]),int(fEdgesSet[j][2])),max(int(fEdgesSet[i][2]),int(fEdgesSet[j][2]))),R))
-                        dfscode.add(R)
-*
-*
-* */

@@ -2,12 +2,13 @@ package BigD
 
 import scala.collection.mutable.MutableList
 /**
-  * Created by francesco on 10/03/17.
-  * AGGIUNGERE DFSCODE
-  * AGGIUNGERE L'estesione supplementare
-  */
+  * Created by francesco  and alessandro on 10/03/17.
+  *
+  *
+  **/
 class MyGraph() extends  Serializable{
   var nodes: MutableList[VertexAF]=MutableList.empty[VertexAF];
+  var dfscode: String="" /*Se la stringa è vuota DFSCode non ancora implementato*/
   def addNode(el:VertexAF) {
     nodes+:= el
   }
@@ -23,8 +24,6 @@ class MyGraph() extends  Serializable{
 
   }
 
-
-  //TODO verificare correttezza
   def DFSVisit(source: VertexAF,strugglers: MutableList[(String,String)],inG:MutableList[VertexAF]): MutableList[(Int,Int,String,String,String)] ={
     /*Deve ritornare una lista di edges */
     var visit: MutableList[(Int,Int,String,String,String)]=MutableList.empty[(Int,Int,String,String,String)]
@@ -32,29 +31,37 @@ class MyGraph() extends  Serializable{
     var discovery=collection.mutable.Map[String,Int]()
     var couple= MutableList.empty[(String,String)]
     discovery(source.vid)=time
-    println("INIZIO DA "+source.vid)
-    DFS(discovery,source,time,visit,couple,strugglers,inG)
+    //println("INIZIO DA "+source.vid)
+    DFS(discovery,source,time+1,visit,couple,strugglers,inG)
     print(visit.mkString("\n"))
     return visit
 
   }
 
   /*Label uniche -> unica visita DFS*/
-  def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)],strugglers: MutableList[(String,String)],inG: MutableList[VertexAF]): Int= {
-    var ntime=0
-    discovery(node.vid)=time
-    ntime=time
-    //println("Sono in -> "+node.vid)
+  /*Impostare anzichè il time la lunghezza dei nodi scoperti*/
+  def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)],strugglers: MutableList[(String,String)],inG: MutableList[VertexAF]) {
     var sorted_neighb=node.adjencies.sortBy(el=>el._1.vid)
-    //sorted_neighb.foreach(el => println(el._1.vid))
+    //println("SONO IN "+node.vid)
     for(cand <- sorted_neighb){
+      //println("HO "+cand._1.vid)
       if(!discovery.keys.exists(p => p==cand._1.vid)) {
-        //println("Ho scoperto -> "+cand._1.vid)
-        discovery(cand._1.vid) = ntime
+        discovery(cand._1.vid) = discovery.count(el => true)
         couple.+=:(node.vid,cand._1.vid) //padre-> figlio
         couple.+=:(cand._1.vid,node.vid) //padre-> figlio
-        visit.+=:((ntime, ntime + 1, node.vid, cand._2, cand._1.vid))
-        ntime=DFS(discovery, cand._1,ntime+1,visit,couple,strugglers,inG)
+        var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el => el._1.vid==cand._1.vid)
+        if(adJAtt.length>0){
+          visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
+          if(strugglers.contains(cand._1.vid,node.vid)){
+            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
+          }
+
+        }
+        else{
+          visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
+        }
+        //visit.+=:((discovery(node.vid), discovery(cand._1.vid), node.vid, cand._2, cand._1.vid)) //Mancano i reverse
+        DFS(discovery,cand._1,time+1,visit,couple,strugglers,inG)
       }
       else{
         if(!couple.contains(node.vid,cand._1.vid) && !couple.contains(cand._1.vid,node.vid)){
@@ -62,6 +69,7 @@ class MyGraph() extends  Serializable{
           couple.+=:(cand._1.vid,node.vid) //padre-> figlio
           /*Devo verificare se forwared edges o backedges nel grafo originale*/
           //Non ho però il riferimento al grafo originale
+          //println("BACKINTHEDAYS")
           var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el => el._1.vid==cand._1.vid)
           if(adJAtt.length>0){
             visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
@@ -78,7 +86,6 @@ class MyGraph() extends  Serializable{
       }
 
     }
-    return time
   }
 
 
