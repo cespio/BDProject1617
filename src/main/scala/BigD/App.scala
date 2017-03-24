@@ -24,7 +24,7 @@ object App {
     val frequentO=new FrequentSubG(graph,thr,size)
     //frequentEdges(graph,thr)
     val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
-    frequentO.candidateGeneration(frequentEdges)
+    var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
     //main loop of the algorithm
     //construction of candidates
     //DFSCode

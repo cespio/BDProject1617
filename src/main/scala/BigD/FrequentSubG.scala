@@ -26,10 +26,10 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
   //constructor of candidates
   //CSP
 
-  def candidateGeneration(freQE: RDD[(String, String, String)]) = {
+  def candidateGeneration(freQE: RDD[(String, String, String)]): RDD[MyGraph] = {
     val temp1 = freQE.cartesian(freQE).filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt) <= 4)
     val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length>0).map(el => makeItUndirect(el))
-    temp2.collect()
+    return temp2
     //Possibile ritorno del RDD
   }
 
@@ -128,7 +128,9 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     return listRis
   }
 
-  def makeItUndirect(inGraph:MyGraph): (MyGraph,String)={
+
+  //TODO verify if it is possible to move this function inside the MyGraph class.
+  def makeItUndirect(inGraph:MyGraph): MyGraph ={
    // println("Grafo orientato ")
     //inGraph.toPrinit()
     var un_G = new MyGraph();

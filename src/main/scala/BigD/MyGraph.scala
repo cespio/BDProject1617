@@ -131,7 +131,7 @@ class MyGraph() extends  Serializable{
   }
   //TODO Risolvere condizione con TODO || Junit to Boolean
   def confrontEdges(a:(Int,Int,String,String,String),b:(Int,Int,String,String,String)): Boolean = {
-    if (a._1 < a._2 && b._1 < b._2 && a._2 < b._2) {
+    if ((a._1 < a._2 && b._1 < b._2 && a._2 < b._2) || ((a._1 > a._2 && b._1 > b._2) && (a._1 < b._1 || a._1 == b._1))) {
       //forwardedges
       return true;
     }
