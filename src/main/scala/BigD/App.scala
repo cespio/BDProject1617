@@ -25,6 +25,9 @@ object App {
     //frequentEdges(graph,thr)
     val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
+    var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
+    candidate2.foreach( el => println(el.toPrinit()))
+    //var res=frequentO.CSPMapReduce(graph,candidateGen.collect().head)
     //main loop of the algorithm
     //construction of candidates
     //DFSCode
@@ -32,9 +35,6 @@ object App {
 
 
   }
-  //Construction of the candidate
-
-
 
 
   //Construct the graph from the file

@@ -33,7 +33,7 @@ class MyGraph() extends  Serializable{
     discovery(source.vid)=time
     //println("INIZIO DA "+source.vid)
     DFS(discovery,source,time+1,visit,couple,strugglers,inG)
-    print(visit.mkString("\n"))
+    //print(visit.mkString("\n"))
     return visit
 
   }
@@ -173,6 +173,35 @@ class MyGraph() extends  Serializable{
     for(el <- nodes){
       el.toPrint()
     }
+  }
+
+  def toFlat(): MutableList[(String,String)] ={
+    var ris:MutableList[(String,String)]=MutableList.empty[(String,String)]
+    for(el <-this.nodes){
+      for(el1 <- el.adjencies){
+        ris+:=(el.vid,el1._1.vid)
+      }
+    }
+    return ris
+  }
+
+
+  def myclone(): MyGraph = {
+    var ret:MyGraph=new MyGraph()
+    for(el <- this.nodes){
+      var nod:VertexAF=new VertexAF(el.vid)
+      ret.addNode(nod)
+    }
+    /*Abbiamo inserito tutti i nodi vuoti*/
+    for(el  <- this.nodes){
+      /*Trovarmi il corrispondente el in ret*/
+      var app=ret.nodes.filter( p => (p.vid == el.vid)).head
+      for(el1 <- el.adjencies){
+        var toAdd=ret.nodes.filter(p =>  (p.vid==el1._1.vid)).head
+        app.addEdge(toAdd,el1._2)
+      }
+    }
+    return ret
   }
 }
 
