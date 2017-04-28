@@ -21,7 +21,7 @@ class MyGraph() extends  Serializable{
     var s=visitToString(visit)
     //println("\nDFSCODE -> "+s)
     return s
-
+//
   }
 
   def DFSVisit(source: VertexAF,strugglers: MutableList[(String,String)],inG:MutableList[VertexAF]): MutableList[(Int,Int,String,String,String)] ={
