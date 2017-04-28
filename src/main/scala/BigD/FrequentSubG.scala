@@ -397,7 +397,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
 
   /*def finalCount(inputGraph: Graph[String, String], candGraph: MyGraph):{
     var allCouples = candGraph.allCouples
-  }*/
+  }*///
 
 
 }

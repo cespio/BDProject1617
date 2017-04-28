@@ -12,7 +12,7 @@ class MyGraph() extends  Serializable{
   def addNode(el:VertexAF) {
     nodes+:= el
   }
-//prova
+//prova/
   def minDFS(strugglers:MutableList[(String,String)],inG:MutableList[VertexAF]): String ={
     var source=this.nodes.sortBy(el=>el.vid).head
     //println("NEW FUCKING VISIT")
