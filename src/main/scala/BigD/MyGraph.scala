@@ -175,7 +175,7 @@ class MyGraph() extends  Serializable{
     }
   }
 
-  def toFlat(): MutableList[(String,String)] ={
+  /*def toFlat(): MutableList[(String,String)] ={
     var ris:MutableList[(String,String)]=MutableList.empty[(String,String)]
     for(el <-this.nodes){
       for(el1 <- el.adjencies){
@@ -183,7 +183,7 @@ class MyGraph() extends  Serializable{
       }
     }
     return ris
-  }
+  }*/
 
 
   def myclone(): MyGraph = {
@@ -202,6 +202,16 @@ class MyGraph() extends  Serializable{
       }
     }
     return ret
+  }
+
+  def allCouples(): MutableList[(String, String)] = {
+    var couples: MutableList[(String, String)] = MutableList.empty[(String, String)]
+    for (el <- this.nodes) {
+      for (nested <- el.adjencies){
+        couples+:=(el.vid, nested._1.vid)
+      }
+    }
+    return couples
   }
 }
 
