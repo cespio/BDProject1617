@@ -386,9 +386,12 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
   }
 
   def CSP(inputGraph: Graph[String, String], toVerify: RDD[MyGraph]){
-     //sasa
     //1*COPPIE MAP REDUCE*//
+    var couples = toVerify.map(el => el.allCouples())
+    var keyCouples = inputGraph.triplets.map(el => ( (el.srcAttr, el.dstAttr), (el.srcId.toString, el.dstId.toString) ) )
+    //sasa
     //2*DOMINI*//
+    //RDD con key(coppia label)
     //3*RECUPERO NODI DA GRAPHX E CONTO CON I CANDDATI DOMINI*//
     //4*IL NUMERO DI POSSIBILI ASSEGNAMENTI DIVERSI é il numero di soluzioni**//
     //5*REVERSE MAP REDUCE. k=function(count) val DFS**/

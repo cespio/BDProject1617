@@ -3,6 +3,7 @@ import org.apache.spark.graphx.{Edge, Graph, VertexId}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
+import scala.collection.mutable
 import scala.util.matching.Regex
 
 
@@ -21,6 +22,8 @@ object App {
     val conf = new SparkConf().setAppName("BigD").setMaster("local[4]")
     val sc = new SparkContext(conf)
     var graph=builtGraphfromFile("data/graphGenOut0.dot",sc)
+    var keyCouples = graph.triplets.map(el => ( (el.srcAttr, el.dstAttr), mutable.MutableList(("ciao", "ciao"))) )
+    var reducedCouples = keyCouples.reduceByKey( (nodo1, nodo2) => nodo1. )
     val frequentO=new FrequentSubG(graph,thr,size)
     //frequentEdges(graph,thr)
     val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
