@@ -22,15 +22,18 @@ object App {
     val conf = new SparkConf().setAppName("BigD").setMaster("local[4]")
     val sc = new SparkContext(conf)
     var graph=builtGraphfromFile("data/graphGenOut0.dot",sc)
-    var keyCouples = graph.triplets.map(el => ( (el.srcAttr, el.dstAttr), mutable.MutableList(("ciao", "ciao"))) )
-    var reducedCouples = keyCouples.reduceByKey( (nodo1, nodo2) => nodo1. )
+
+    //REDUCING COUPLES USING MAP REDUCE -> THEN FILTERING THEM
+    var keyCouples = graph.triplets.map(el => ((el.srcAttr, el.dstAttr), List((el.srcId.toString, el.dstId.toString))))
+    var reducedCouples = keyCouples.reduceByKey((nodo1, nodo2) => nodo1++nodo2)
+    //couple reduced
+
     val frequentO=new FrequentSubG(graph,thr,size)
     //frequentEdges(graph,thr)
     val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
-    var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
-    candidate2.foreach( el => println(el.toPrinit()))
-    //var res=frequentO.CSPMapReduce(graph,candidateGen.collect().head)
+   // var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
+    frequentO.CSPMapReduce(graph,candidateGen.collect().head,reducedCouples)
     //main loop of the algorithm
     //construction of candidates
     //DFSCode

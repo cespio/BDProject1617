@@ -385,11 +385,36 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     return inGraph
   }
 
-  def CSP(inputGraph: Graph[String, String], toVerify: RDD[MyGraph]){
+  def CSPMapReduce(inputGraph: Graph[String, String], toVerify: MyGraph, reducedCouple: RDD[((String,String),List[(String,String)])]){
     //1*COPPIE MAP REDUCE*//
-    var couples = toVerify.map(el => el.allCouples())
-    var keyCouples = inputGraph.triplets.map(el => ( (el.srcAttr, el.dstAttr), (el.srcId.toString, el.dstId.toString) ) )
-    //sasa
+    var couples = toVerify.allCouples()//RDD of my couples -> need of key (dfscode,allcouples)
+    var filteredCouples = reducedCouple.filter( el => couples.indexOf(el._1)>0) // coppie filtrate //TODO aggiungere il weight al "allcouples"
+    //creazione dei domini
+    var app:Graph[String,String]=inputGraph
+    var temp=app.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr))>0)
+    temp.triplets.collect().foreach(print(_))
+    /*for(el <- couples){
+      println(el)
+      var temp=app.subgraph(epred= e => (e.srcAttr,e.dstAttr)==el)
+      temp.triplets.collect().foreach(println(_))
+      app=temp
+
+    }*/
+    //Filter the couple with the regard of the big reduced already computed from reducedCouple
+    //var dfscouplesDomain = dfscouples.map(el => (computeCSP(el._2,inputGraph,reducedCouple),el._1)) //ritorno il DFS,numero di volte in cui appare
+
+
+
+
+
+
+
+
+
+
+
+
+
     //2*DOMINI*//
     //RDD con key(coppia label)
     //3*RECUPERO NODI DA GRAPHX E CONTO CON I CANDDATI DOMINI*//
@@ -402,5 +427,13 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     var allCouples = candGraph.allCouples
   }*///
 
+  def computeCSP( coupleGraph: mutable.MutableList[(String,String)], inputGraph:Graph[String,String], reducedCouple: RDD[((String,String),List[(String,String)])]){
+    //filtraggio delle coppie
+    var filteredReducedCouple=reducedCouple.filter(el => coupleGraph.indexOf(el._1)>0)
+    filteredReducedCouple.collect().foreach(println(_))
+    //coppie filtrate
 
+    //creazione dei domini e poi verifica
+
+  }
 }
