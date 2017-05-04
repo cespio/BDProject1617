@@ -24,6 +24,7 @@ object App {
     var graph=builtGraphfromFile("data/graphGenOut0.dot",sc)
 
     //REDUCING COUPLES USING MAP REDUCE -> THEN FILTERING THEM
+    //Potrebbe non servire
     var keyCouples = graph.triplets.map(el => ((el.srcAttr, el.dstAttr), List((el.srcId.toString, el.dstId.toString))))
     var reducedCouples = keyCouples.reduceByKey((nodo1, nodo2) => nodo1++nodo2)
     //couple reduced
@@ -33,7 +34,7 @@ object App {
     val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
    // var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
-    frequentO.CSPMapReduce(graph,candidateGen.collect().head,reducedCouples)
+    frequentO.CSPMapReduce(graph,candidateGen.collect().head)
     //main loop of the algorithm
     //construction of candidates
     //DFSCode

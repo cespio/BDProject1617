@@ -385,55 +385,40 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     return inGraph
   }
 
-  def CSPMapReduce(inputGraph: Graph[String, String], toVerify: MyGraph, reducedCouple: RDD[((String,String),List[(String,String)])]){
-    //1*COPPIE MAP REDUCE*//
-    var couples = toVerify.allCouples()//RDD of my couples -> need of key (dfscode,allcouples)
-    var filteredCouples = reducedCouple.filter( el => couples.indexOf(el._1)>0) // coppie filtrate //TODO aggiungere il weight al "allcouples"
-    //creazione dei domini
-    var app:Graph[String,String]=inputGraph
-    var temp=app.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr))>0)
-    temp.triplets.collect().foreach(print(_))
-    /*for(el <- couples){
-      println(el)
-      var temp=app.subgraph(epred= e => (e.srcAttr,e.dstAttr)==el)
-      temp.triplets.collect().foreach(println(_))
-      app=temp
+  //TODO aggiungere il weight al "allcouples"
+  //non se più necessario reduced couple
+  def CSPMapReduce(inputGraph: Graph[String, String], toVerify: MyGraph ){
+    //ritorno le coopie del mio grafo
+    var couples = toVerify.allCouples()
+    //dal grafo di input mi prendo le triple ((ids,at),(idd,at),at)) che compaino nel grafo e che rispettano la coopia
+    //bisogna capire se conviene così, o con l'RDD nel main creato (approccio precdente))
+    var temp=inputGraph.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr))>0)
+    //Creao una lista di RDD, ogni label ha il suo rdd, poi proddocartesiano
+    var listRDD:mutable.MutableList[RDD[Int]]=mutable.MutableList.empty[RDD[Int]]
+    var domainRDD:RDD[List[Int]]=null
+    for(el <- toVerify.nodes) {
+      listRDD :+= temp.vertices.filter(v => v._2 == el.vid).map(v => v._1.toInt)
+    }
+    for(i <- 0 to listRDD.length-1){
+      println(i)
+      if(i==0) {
+        domainRDD = listRDD.get(i).get.map(el => List(el))
+      }
+      else {
+        var tmp=domainRDD.cartesian(listRDD.get(i).head).map(el=> el._1 ++ List(el._2))
+        domainRDD=tmp
+      }
+    }
+    //DOMAINRDD hai tutte le possibili combinazioni di domini
+    //bisognerebbe strutturare una map((dominiocandidato),grafo,input)) -> ritornare zero o uno e poi sommare
+    //la funzione sopracitata ritorna 1 se il candidato compare nel grafo
 
-    }*/
-    //Filter the couple with the regard of the big reduced already computed from reducedCouple
-    //var dfscouplesDomain = dfscouples.map(el => (computeCSP(el._2,inputGraph,reducedCouple),el._1)) //ritorno il DFS,numero di volte in cui appare
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //2*DOMINI*//
-    //RDD con key(coppia label)
-    //3*RECUPERO NODI DA GRAPHX E CONTO CON I CANDDATI DOMINI*//
-    //4*IL NUMERO DI POSSIBILI ASSEGNAMENTI DIVERSI é il numero di soluzioni**//
-    //5*REVERSE MAP REDUCE. k=function(count) val DFS**/
-
-  }
-//
-  /*def finalCount(inputGraph: Graph[String, String], candGraph: MyGraph):{
-    var allCouples = candGraph.allCouples
-  }*///
-
-  def computeCSP( coupleGraph: mutable.MutableList[(String,String)], inputGraph:Graph[String,String], reducedCouple: RDD[((String,String),List[(String,String)])]){
-    //filtraggio delle coppie
-    var filteredReducedCouple=reducedCouple.filter(el => coupleGraph.indexOf(el._1)>0)
-    filteredReducedCouple.collect().foreach(println(_))
-    //coppie filtrate
-
-    //creazione dei domini e poi verifica
 
   }
 }
+
+
+//2*DOMINI*//
+//3*RECUPERO NODI DA GRAPHX E CONTO CON I CANDDATI DOMINI*//
+//4*IL NUMERO DI POSSIBILI ASSEGNAMENTI DIVERSI é il numero di soluzioni**//
+//5*REVERSE MAP REDUCE. k=function(count) val DFS**/
