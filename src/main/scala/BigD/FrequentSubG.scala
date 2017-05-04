@@ -392,7 +392,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     var couples = toVerify.allCouples()
     //dal grafo di input mi prendo le triple ((ids,at),(idd,at),at)) che compaino nel grafo e che rispettano la coopia
     //bisogna capire se conviene così, o con l'RDD nel main creato (approccio precdente))
-    var temp=inputGraph.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr))>0)
+    var temp=inputGraph.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr,e.attr))>0)
     //Creao una lista di RDD, ogni label ha il suo rdd, poi proddocartesiano
     var listRDD:mutable.MutableList[RDD[Int]]=mutable.MutableList.empty[RDD[Int]]
     var domainRDD:RDD[List[Int]]=null
@@ -409,11 +409,27 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
         domainRDD=tmp
       }
     }
+    var ret=domainRDD.map(el => checkGraph(toVerify,el,inputGraph))
     //DOMAINRDD hai tutte le possibili combinazioni di domini
     //bisognerebbe strutturare una map((dominiocandidato),grafo,input)) -> ritornare zero o uno e poi sommare
     //la funzione sopracitata ritorna 1 se il candidato compare nel grafo
 
 
+  }
+
+
+  def checkGraph(toVerify:MyGraph, dom:List[Int], inputGraph:Graph[String,String]):Int={
+    for(el <- toVerify.nodes){
+      for(nested <- el.adjencies){
+        //mi serve l'indice di el,l'indice di nested._1.id,per poi recuperare l'ordine in cui sono inseriti gli elementi nel dominio
+        //e poi controllar el'esistenza di su inputgraph -> there exist an edge between these two nodes with this arch weight?
+
+        //recupero l'id di el
+        var index1=toVerify.nodes.indexOf(el)
+        var index2=toVerify.nodes.indexOf ///
+      }
+    }
+    return 1
   }
 }
 

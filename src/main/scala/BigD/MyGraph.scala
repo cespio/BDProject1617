@@ -204,11 +204,11 @@ class MyGraph() extends  Serializable{
     return ret
   }
 
-  def allCouples(): MutableList[(String, String)] = {
-    var couples: MutableList[(String, String)] = MutableList.empty[(String, String)]
+  def allCouples(): MutableList[(String, String,String)] = {
+    var couples: MutableList[(String, String, String)] = MutableList.empty[(String, String, String)]
     for (el <- this.nodes) {
       for (nested <- el.adjencies){
-        couples+:=(el.vid, nested._1.vid)
+        couples+:=(el.vid, nested._1.vid, nested._2) //sorgente destinazione e peso
       }
     }
     return couples
