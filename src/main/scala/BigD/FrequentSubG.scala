@@ -385,7 +385,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
     return inGraph
   }
 
-  //TODO aggiungere il weight al "allcouples"
+
   //non se più necessario reduced couple
   def CSPMapReduce(inputGraph: Graph[String, String], toVerify: MyGraph ){
     //ritorno le coopie del mio grafo
@@ -410,6 +410,7 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
       }
     }
     var ret=domainRDD.map(el => checkGraph(toVerify,el,inputGraph))
+    ret.collect().foreach(print(_))
     //DOMAINRDD hai tutte le possibili combinazioni di domini
     //bisognerebbe strutturare una map((dominiocandidato),grafo,input)) -> ritornare zero o uno e poi sommare
     //la funzione sopracitata ritorna 1 se il candidato compare nel grafo
@@ -417,16 +418,25 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
 
   }
 
-
+  //TODO think about a possible optimization
   def checkGraph(toVerify:MyGraph, dom:List[Int], inputGraph:Graph[String,String]):Int={
+    
+    println(dom.foreach(println(_)))
     for(el <- toVerify.nodes){
+      var index1=toVerify.nodes.indexOf(el)
+      var n1=dom(index1)
+      println(index1)
       for(nested <- el.adjencies){
         //mi serve l'indice di el,l'indice di nested._1.id,per poi recuperare l'ordine in cui sono inseriti gli elementi nel dominio
         //e poi controllar el'esistenza di su inputgraph -> there exist an edge between these two nodes with this arch weight?
-
         //recupero l'id di el
-        var index1=toVerify.nodes.indexOf(el)
-        var index2=toVerify.nodes.indexOf ///
+        var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el => el.vid==nested._1.vid))
+        var n2=dom(index2)
+        println(index1)
+        println(index2)
+        if(inputGraph.subgraph(epred= e => e.srcAttr==el.vid && e.dstAttr==nested._1.vid && e.attr==nested._2).numEdges==0){
+          return 0
+        }
       }
     }
     return 1
