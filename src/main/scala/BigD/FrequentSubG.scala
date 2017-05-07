@@ -1,7 +1,9 @@
 package BigD
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.graphx._
+
 import scala.collection.mutable
 import scala.util.control.Breaks._
 
@@ -9,17 +11,35 @@ import scala.util.control.Breaks._
 /**
   * Created by francesco on 02/03/17.
   */
-class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_arg:Int,size_arg:Int) extends Serializable {
-  var graph: org.apache.spark.graphx.Graph[String, String] = graph_arg
+class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int,sc_arg:SparkContext) extends Serializable {
+  var graph: MyGraphInput = graph_arg
   val thr = thr_arg
   val size = size_arg
+  val sc=sc_arg
 
   //function do define
   //frequent edges
   def frequentEdges(): RDD[(String, String, String)] = {
-    //si potrebbe applicare anche qui un principio di map reduce
+    //definisco una map come in datamining
+    var frequent=scala.collection.mutable.HashMap.empty[(String,String,String),Int]
+    for(k <- graph.mapNodes.keys){
+      var node=graph.mapNodes(k)
+      for(el <- node.adjencies){
+        var edge:(String,String,String)=(node.label,el._1.label,el._2)
+        if(frequent.contains(edge)==false)
+          frequent+=(edge->1)
+        else{
+          var n=frequent(edge)+1
+          frequent.update(edge,n)
+        }
+      }
+    }
+    var frequentArr=frequent.filter(p=>p._2>=thr_arg).keys.toArray
+    var temp1=sc.parallelize(frequentArr)
+    /*
     val temp = graph.triplets.map(tr => ((tr.srcAttr, tr.dstAttr, tr.attr), 1))
-    val temp1 = temp.reduceByKey((a, b) => a + b).filter(el => (el._2.toInt >= thr && (el._1._1 != el._1._2))).map(el => el._1)
+    val temp1 = temp.reduceByKey((a, b) => a + b).filter(el => (el._2.toInt >= thr && (el._1._1 != el._1._2))).map(el => el._1)*/
+
     return temp1
   }
 
@@ -318,41 +338,27 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
 
   //TODO verify if it is possible to move this function inside the MyGraph class.
   def makeItUndirect(inGraph: MyGraph): MyGraph = {
-    // println("Grafo orientato ")
-    //inGraph.toPrinit()
     var un_G = new MyGraph();
     var strugglers: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
     var couple: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
-    //println("Bella")
     var S: VertexAF = null;
     var D: VertexAF = null;
     var nodes = inGraph.nodes
     for (el <- nodes) {
-      /*mi prendo i nodi, poi per ogni nodo mi prendo un arco*/
-      //println("Esamindando "+el.vid)
-      //un_G.toPrinit()
-
       if (un_G.nodes.count(f => f.vid == el.vid) >= 1) {
-        //Verifica la presenza del nodo nel grafo, se non c'è lo creo vuoto
         S = un_G.nodes.filter(f => f.vid == el.vid).head
-        //println("Trovato S -> "+el.vid)
       }
       else {
         S = new VertexAF(el.vid)
-        //println("Creo S -> "+el.vid)
         un_G.addNode(S)
       }
       for (el1 <- el.adjencies) {
         if (!couple.contains(el.vid, el1._1.vid) && !couple.contains(el1._1.vid, el.vid)) {
-          /*occhio caso cicli*/
-          //println("Trovo "+el1._1.vid)
           if (un_G.nodes.count(f => f.vid == el1._1.vid) >= 1) {
             D = un_G.nodes.filter(f => f.vid == el1._1.vid).head
-            //println("Trovato D -> "+el1._1.vid)
           }
           else {
             D = new VertexAF(el1._1.vid)
-            //println("Creo D -> " + el1._1.vid)
             un_G.addNode(D)
           }
           if (S != null && D != null) {
@@ -369,17 +375,11 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
           }
 
         }
-
-
       }
     }
-    //var app=un_G.nodes.head
-    //un_G.DFSVisit(app)
     var code = ""
-    if (un_G.nodes.length != 0) {
+    if (un_G.nodes.length != 0)
       code = un_G.minDFS(strugglers, inGraph.nodes.clone())
-      //println("DFSCODE "+code)
-    }
     //**ASSEGNAMENTO del DFSCODE al grafo in input*//
     inGraph.dfscode = code
     return inGraph
@@ -409,8 +409,33 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
         domainRDD=tmp
       }
     }
-    var ret=domainRDD.map(el => checkGraph(toVerify,el,inputGraph))
-    ret.collect().foreach(print(_))
+
+    /*var ret=domainRDD.map(el => checkGraph(toVerify,el,inputGraph))*/
+    //var ret=inputGraph.map(el => checkGraph(toVerify,el,inputGraph))
+    //ret.collect().foreach(print(_))
+    var array=domainRDD.collect()
+    for(dom <- array){
+      println("INIZIO LISTA")
+      dom.foreach(println(_))
+      print("FINE LISTA")
+      for(el <- toVerify.nodes){
+        var index1=toVerify.nodes.indexOf(el)
+        var n1=dom(index1)
+        for(nested <- el.adjencies){
+          //mi serve l'indice di el,l'indice di nested._1.id,per poi recuperare l'ordine in cui sono inseriti gli elementi nel dominio
+          //e poi controllar el'esistenza di su inputgraph -> there exist an edge between these two nodes with this arch weight?
+          //recupero l'id di el
+          var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el1 => el1.vid==nested._1.vid).head)
+          var n2=dom(index2)
+          println(index1)
+          println(index2)
+          if(inputGraph.triplets.filter( e => e.srcId.toString==n1 && e.dstId.toString==n2 && e.attr==nested._2).count()==0){
+            print("NO")
+          }
+        }
+      }
+      print("SI")
+    }
     //DOMAINRDD hai tutte le possibili combinazioni di domini
     //bisognerebbe strutturare una map((dominiocandidato),grafo,input)) -> ritornare zero o uno e poi sommare
     //la funzione sopracitata ritorna 1 se il candidato compare nel grafo
@@ -418,28 +443,28 @@ class FrequentSubG (graph_arg: org.apache.spark.graphx.Graph[String,String],thr_
 
   }
 
-  //TODO think about a possible optimization
-  def checkGraph(toVerify:MyGraph, dom:List[Int], inputGraph:Graph[String,String]):Int={
-    
-    println(dom.foreach(println(_)))
+
+  def checkGraph(toVerify:MyGraph, dom:List[Int], inputGraph:Graph[String,String]){
+    println("INIZIO LISTA")
+    dom.foreach(println(_))
+    print("FINE LISTA")
     for(el <- toVerify.nodes){
       var index1=toVerify.nodes.indexOf(el)
       var n1=dom(index1)
-      println(index1)
       for(nested <- el.adjencies){
         //mi serve l'indice di el,l'indice di nested._1.id,per poi recuperare l'ordine in cui sono inseriti gli elementi nel dominio
         //e poi controllar el'esistenza di su inputgraph -> there exist an edge between these two nodes with this arch weight?
         //recupero l'id di el
-        var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el => el.vid==nested._1.vid))
+        var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el1 => el1.vid==nested._1.vid).head)
         var n2=dom(index2)
         println(index1)
         println(index2)
-        if(inputGraph.subgraph(epred= e => e.srcAttr==el.vid && e.dstAttr==nested._1.vid && e.attr==nested._2).numEdges==0){
-          return 0
+        if(inputGraph.triplets.filter( e => e.srcId.toString==n1 && e.dstId.toString==n2 && e.attr==nested._2).count()==0){
+          "0"
         }
       }
     }
-    return 1
+    "1"
   }
 }
 
