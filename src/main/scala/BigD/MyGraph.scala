@@ -6,7 +6,7 @@ import scala.collection.mutable.MutableList
   *
   *
   **/
-class MyGraph() extends  Serializable{
+class MyGraph() extends Serializable {
   var nodes: MutableList[VertexAF]=MutableList.empty[VertexAF];
   var dfscode: String="" /*Se la stringa è vuota DFSCode non ancora implementato*/
   def addNode(el:VertexAF) {
@@ -130,7 +130,7 @@ class MyGraph() extends  Serializable{
 
   }
   def confrontEdges(a:(Int,Int,String,String,String),b:(Int,Int,String,String,String)): Boolean = {
-    if ((a._1 < a._2 && b._1 < b._2 && a._2 < b._2) || ((a._1 > a._2 && b._1 > b._2) && (a._1 < b._1 || a._1 == b._1)) || ((a._1 > a._2 && b._1 > b._2) && (a._1 < b._1 || a._1 == b._1 && a._2 < b._2) )) {
+    if ((a._1 < a._2 && b._1 < b._2 && a._2 < b._2) || ((a._1 > a._2 && b._1 > b._2) && (a._1 < b._1 || a._1 == b._1)))  {
       //forwardedges
       return true;
     }

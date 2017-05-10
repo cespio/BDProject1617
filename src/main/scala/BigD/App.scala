@@ -4,13 +4,14 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
+import scala.util.control.Breaks.{break, breakable}
 import scala.util.matching.Regex
 
 
 /**
  * @author ${francesco.contaldo, graphX tries}
  */
-object App {
+object App extends Serializable{
 
   def main(args : Array[String]) {
     //val scanner=new Scanner(System.in)
@@ -22,11 +23,13 @@ object App {
     val sc = new SparkContext(conf)
     //creazione graf con oggetto
     var graph=builtGraphfromFile("data/graphGenOut0.dot")
-    val frequentO=new FrequentSubG(graph,thr,size,sc)
+    val frequentO=new FrequentSubG(graph,thr,size)
+    //var proova=sc.parallelize(frequentO)
 
-    val frequentEdges: RDD[(String,String,String)]=frequentO.frequentEdges()
+    val frequentEdges: RDD[(String,String,String)]=frequentEdgesAPP(graph,sc,thr)
+    frequentEdges.collect().foreach(println(_))
     //TODO da aggiungere assolutamente anche il DFSCODE sull'estensione dei candidati, sia simple che complex
-    frequentEdges.collect().foreach(print(_))
+    //frequentEdges.collect().foreach(print(_))
     //--ROBA VECCHIA --
     //REDUCING COUPLES USING MAP REDUCE -> THEN FILTERING THEM
     //Potrebbe non servire
@@ -34,9 +37,16 @@ object App {
     //var reducedCouples = keyCouples.reduceByKey((nodo1, nodo2) => nodo1++nodo2)
     //couple reduced
 
-
+    //TODO aggiungere DFS code tra gli extension e verificare se esiste o meno
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
+    //candidateGen.collect().foreach(el=>el.toPrinit())
     var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
+    var arra:List[MyGraphInput]=List(graph)
+    var arraRDD=sc.parallelize(arra)
+    var ris=candidate2.map(el=> frequentO.CSPMapReduce(graph,el))
+    ris.collect().foreach(el=>print(el))
+    //candidate2.cartesian(arraRDD).foreach(el=> print(el))
+    //prova.collect()
     //frequentO.CSPMapReduce(graph,candidateGen.collect().head)
     //print(candidateGen.foreach(el=>))
 
@@ -47,7 +57,27 @@ object App {
 
 
   }
-
+  def frequentEdgesAPP(graph:MyGraphInput,sc:SparkContext,thr:Int): RDD[(String, String, String)] = {
+    //definisco una map come in datamining
+    var frequent=scala.collection.mutable.HashMap.empty[(String,String,String),Int]
+    for(k <- graph.nodes){
+      for(el <- k.adjencies){
+        var edge:(String,String,String)=(k.label,el._1.label,el._2)
+        if(frequent.contains(edge)==false)
+          frequent+=(edge->1)
+        else{
+          var n=frequent(edge)+1
+          frequent.update(edge,n)
+        }
+      }
+    }
+    var frequentArr=frequent.filter(p=>p._2>=thr).keys.toArray.clone()
+    var temp1=sc.parallelize(frequentArr)
+    /*
+    val temp = graph.triplets.map(tr => ((tr.srcAttr, tr.dstAttr, tr.attr), 1))
+    val temp1 = temp.reduceByKey((a, b) => a + b).filter(el => (el._2.toInt >= thr && (el._1._1 != el._1._2))).map(el => el._1)*/
+    return temp1
+  }
 
   //Construct the graph from the file, no more with graphX but exploiting the new class vertexAfInput and MyGraphInput
   def builtGraphfromFile(fileName :String): MyGraphInput ={
@@ -62,7 +92,7 @@ object App {
           //Nodo sorgente
           if (graphIn.keyPres(splitted(0))==false) { //non esiste nel grafo di input
             nodeS=new VertexAFInput(splitted(0),"label")
-            graphIn.addNode(splitted(0),nodeS)
+            graphIn.addNode(nodeS)
           }
           else
             nodeS=graphIn.getNode(splitted(0))
@@ -70,7 +100,7 @@ object App {
           //Nodo dest
           if (graphIn.keyPres(splitted(1))==false){//se false vuol dire che non esiste il nodo
             nodeD=new VertexAFInput(splitted(1),"label")
-            graphIn.addNode(splitted(1),nodeD)
+            graphIn.addNode(nodeD)
           }
           else
             nodeD=graphIn.getNode(splitted(1))
@@ -87,9 +117,6 @@ object App {
     }
     return graphIn
   }
-
-
-
 }
 
 
@@ -118,3 +145,4 @@ object App {
     val graph=Graph(vRDD,eRDD)
     return graph
   }*/
+

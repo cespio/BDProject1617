@@ -11,45 +11,22 @@ import scala.util.control.Breaks._
 /**
   * Created by francesco on 02/03/17.
   */
-class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int,sc_arg:SparkContext) extends Serializable {
+class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Serializable{
   var graph: MyGraphInput = graph_arg
   val thr = thr_arg
   val size = size_arg
-  val sc=sc_arg
 
   //function do define
   //frequent edges
-  def frequentEdges(): RDD[(String, String, String)] = {
-    //definisco una map come in datamining
-    var frequent=scala.collection.mutable.HashMap.empty[(String,String,String),Int]
-    for(k <- graph.mapNodes.keys){
-      var node=graph.mapNodes(k)
-      for(el <- node.adjencies){
-        var edge:(String,String,String)=(node.label,el._1.label,el._2)
-        if(frequent.contains(edge)==false)
-          frequent+=(edge->1)
-        else{
-          var n=frequent(edge)+1
-          frequent.update(edge,n)
-        }
-      }
-    }
-    var frequentArr=frequent.filter(p=>p._2>=thr_arg).keys.toArray
-    var temp1=sc.parallelize(frequentArr)
-    /*
-    val temp = graph.triplets.map(tr => ((tr.srcAttr, tr.dstAttr, tr.attr), 1))
-    val temp1 = temp.reduceByKey((a, b) => a + b).filter(el => (el._2.toInt >= thr && (el._1._1 != el._1._2))).map(el => el._1)*/
 
-    return temp1
-  }
 
   //constructor of candidates simple
   //CSP
 
-  def candidateGeneration(freQE: RDD[(String, String, String)]): RDD[MyGraph] = {
-    val temp1 = freQE.cartesian(freQE).filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toInt - el._2._3.toInt) <= 4)
-    val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length > 0).map(el => makeItUndirect(el))
-    //temp2.collect()
+  def candidateGeneration(freQE: RDD[(String, String, String)]):RDD[MyGraph]={
+   //val temp1 = freQE.cartesian(freQE)
+    var temp1 = freQE.cartesian(freQE).filter(el => (el._1._1 == el._2._2 && el._1._2 != el._2._1) || (el._1._2 == el._2._1 && el._1._1 != el._2._2) || (el._1._1 == el._2._1 && el._1._2 != el._2._2) || (el._1._2 == el._2._2 && el._1._1 != el._2._1))//.filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
+    val temp2 = temp1.flatMap(el => constructTheGraph(el))//.filter(el => el.nodes.length > 0).map(el => makeItUndirect(el))
     return temp2
     //Possibile ritorno del RDD
   }
@@ -64,7 +41,6 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int,sc_arg:Spark
 
   def constructTheGraph(couple: ((String, String, String), (String, String, String))): mutable.MutableList[MyGraph] = {
     var G = new MyGraph()
-    //println("CANDIDATI "+couple)
     var listRis: mutable.MutableList[MyGraph] = mutable.MutableList.empty[MyGraph]
     //print(" CASO 1 ")
     //f ((fEdgesSet[i][0] == fEdgesSet[j][1]) and (fEdgesSet[i][1] == fEdgesSet [j][0]) and (fEdgesSet[i][0] != fEdgesSet [i][1]) and (fEdgesSet[j][0] != fEdgesSet [j][1])):
@@ -258,7 +234,6 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int,sc_arg:Spark
     var toExtend = partialGraphs.map(el => extendTheGraph(el))
 
     //partialGraphs.collect().map(el=>println(el._1.visualRoot(), el._2, el._3))
-    toExtend.collect()
     return toExtend
 
   }
@@ -378,19 +353,21 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int,sc_arg:Spark
       }
     }
     var code = ""
+
     if (un_G.nodes.length != 0)
       code = un_G.minDFS(strugglers, inGraph.nodes.clone())
     //**ASSEGNAMENTO del DFSCODE al grafo in input*//
+    print(code)
     inGraph.dfscode = code
     return inGraph
   }
 
 
   //non se più necessario reduced couple
-  def CSPMapReduce(inputGraph: Graph[String, String], toVerify: MyGraph ){
+  def CSPMapReduce(inputGraph: MyGraphInput, toVerify: MyGraph ):Int={
     //ritorno le coopie del mio grafo
     var couples = toVerify.allCouples()
-    //dal grafo di input mi prendo le triple ((ids,at),(idd,at),at)) che compaino nel grafo e che rispettano la coopia
+    /*//dal grafo di input mi prendo le triple ((ids,at),(idd,at),at)) che compaino nel grafo e che rispettano la coopia
     //bisogna capire se conviene così, o con l'RDD nel main creato (approccio precdente))
     var temp=inputGraph.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr,e.attr))>0)
     //Creao una lista di RDD, ogni label ha il suo rdd, poi proddocartesiano
@@ -435,12 +412,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int,sc_arg:Spark
         }
       }
       print("SI")
+
     }
     //DOMAINRDD hai tutte le possibili combinazioni di domini
     //bisognerebbe strutturare una map((dominiocandidato),grafo,input)) -> ritornare zero o uno e poi sommare
     //la funzione sopracitata ritorna 1 se il candidato compare nel grafo
+    */
 
-
+    return 0
   }
 
 
