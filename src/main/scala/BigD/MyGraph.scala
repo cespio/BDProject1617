@@ -1,5 +1,6 @@
 package BigD
 
+import scala.collection.mutable
 import scala.collection.mutable.MutableList
 /**
   * Created by francesco  and alessandro on 10/03/17.
@@ -212,6 +213,57 @@ class MyGraph() extends Serializable {
     }
     return couples
   }
+
+
+  //TODO verify if it is possible to move this function inside the MyGraph class.
+  def makeItUndirect():MyGraph={
+    var un_G = new MyGraph();
+    var strugglers: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
+    var couple: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
+    var S: VertexAF = null;
+    var D: VertexAF = null;
+    var nodes = this.nodes
+    for (el <- nodes) {
+      if (un_G.nodes.count(f => f.vid == el.vid) >= 1) {
+        S = un_G.nodes.filter(f => f.vid == el.vid).head
+      }
+      else {
+        S = new VertexAF(el.vid)
+        un_G.addNode(S)
+      }
+      for (el1 <- el.adjencies) {
+        if (!couple.contains(el.vid, el1._1.vid) && !couple.contains(el1._1.vid, el.vid)) {
+          if (un_G.nodes.count(f => f.vid == el1._1.vid) >= 1) {
+            D = un_G.nodes.filter(f => f.vid == el1._1.vid).head
+          }
+          else {
+            D = new VertexAF(el1._1.vid)
+            un_G.addNode(D)
+          }
+          if (S != null && D != null) {
+            S.addEdge(D, el1._2)
+            D.addEdge(S, el1._2)
+          }
+          couple :+= (el.vid, el1._1.vid)
+        } else {
+          if (couple.contains(el.vid, el1._1.vid)) {
+            strugglers :+= (el1._1.vid, el.vid)
+          }
+          else {
+            strugglers :+= (el.vid, el1._1.vid)
+          }
+
+        }
+      }
+    }
+    var code = ""
+
+    if (un_G.nodes.length != 0)
+      code = un_G.minDFS(strugglers, this.nodes.clone())
+    this.dfscode = code
+    return this
+  }
+
 }
 
 

@@ -15,17 +15,11 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   var graph: MyGraphInput = graph_arg
   val thr = thr_arg
   val size = size_arg
-  //function do define
-  //frequent edges
-
-
-  //constructor of candidates simple
-  //CSP
 
   def candidateGeneration(freQE: RDD[(String, String, String)]):RDD[MyGraph]={
    //val temp1 = freQE.cartesian(freQE)
     var temp1 = freQE.cartesian(freQE).filter(el => (el._1._1 == el._2._2 && el._1._2 != el._2._1) || (el._1._2 == el._2._1 && el._1._1 != el._2._2) || (el._1._1 == el._2._1 && el._1._2 != el._2._2) || (el._1._2 == el._2._2 && el._1._1 != el._2._1))//.filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
-    val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length > 0).map(el => makeItUndirect(el))
+    val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length > 0).map(el => el.makeItUndirect())
     return temp2
     //Possibile ritorno del RDD
   }
@@ -44,7 +38,6 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 1 ")
     //f ((fEdgesSet[i][0] == fEdgesSet[j][1]) and (fEdgesSet[i][1] == fEdgesSet [j][0]) and (fEdgesSet[i][0] != fEdgesSet [i][1]) and (fEdgesSet[j][0] != fEdgesSet [j][1])):
     if ((couple._1._1 == couple._2._2) && (couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2)) {
-      //cycle
       //print(" IN CASO 1 ")
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._2._2)
@@ -116,11 +109,6 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       G.addNode(V2)
       listRis :+= (G)
     }
-    /** println(" RIS OBTAINED ")
-      * for(el <- listRis){
-      * println("NEXT #")
-      * println(el.toPrinit())
-      * } */
     return listRis
   }
 
@@ -309,57 +297,6 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     clone
   }
 
-
-  //TODO verify if it is possible to move this function inside the MyGraph class.
-  def makeItUndirect(inGraph: MyGraph): MyGraph = {
-    var un_G = new MyGraph();
-    var strugglers: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
-    var couple: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
-    var S: VertexAF = null;
-    var D: VertexAF = null;
-    var nodes = inGraph.nodes
-    for (el <- nodes) {
-      if (un_G.nodes.count(f => f.vid == el.vid) >= 1) {
-        S = un_G.nodes.filter(f => f.vid == el.vid).head
-      }
-      else {
-        S = new VertexAF(el.vid)
-        un_G.addNode(S)
-      }
-      for (el1 <- el.adjencies) {
-        if (!couple.contains(el.vid, el1._1.vid) && !couple.contains(el1._1.vid, el.vid)) {
-          if (un_G.nodes.count(f => f.vid == el1._1.vid) >= 1) {
-            D = un_G.nodes.filter(f => f.vid == el1._1.vid).head
-          }
-          else {
-            D = new VertexAF(el1._1.vid)
-            un_G.addNode(D)
-          }
-          if (S != null && D != null) {
-            S.addEdge(D, el1._2)
-            D.addEdge(S, el1._2)
-          }
-          couple :+= (el.vid, el1._1.vid)
-        } else {
-          if (couple.contains(el.vid, el1._1.vid)) {
-            strugglers :+= (el1._1.vid, el.vid)
-          }
-          else {
-            strugglers :+= (el.vid, el1._1.vid)
-          }
-
-        }
-      }
-    }
-    var code = ""
-
-    if (un_G.nodes.length != 0)
-      code = un_G.minDFS(strugglers, inGraph.nodes.clone())
-    //**ASSEGNAMENTO del DFSCODE al grafo in input*//
-    print(code)
-    inGraph.dfscode = code
-    return inGraph
-  }
 
 
   //non se più necessario reduced couple
