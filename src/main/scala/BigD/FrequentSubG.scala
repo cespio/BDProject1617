@@ -367,7 +367,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   def CSPMapReduce(inputGraph: MyGraphInput, toVerify: MyGraph ):Int={
     //ritorno le coopie del mio grafo
     var domainCoup=mutable.MutableList.empty[mutable.MutableList[(String,String)]]
-    var domainLabel=mutable.MutableList.empty[mutable.MutableList[(String)]]
+    var domainLabel=mutable.MutableList.empty[List[String]]
     var couples = toVerify.allCouples()
     for(el <- couples){
       domainCoup+=inputGraph.retreiveDomainCouple(el)
@@ -376,12 +376,17 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //*Sempre prima la label*//
     var i=0
     for(el <- toVerify.nodes){
-      if(i==0)
-        domainLabel+=domainCoupF.filter( ed => ed._1==el).map(ed => ed._1)
-      else
-        var tmp=domainLabel.head cross domainCoupF.filter(ed => ed._1==el).map(ed => ed._1)
+      if(i==0){
+        domainLabel=domainCoupF.filter( ed => ed._1==el.vid).map(ed => List(ed._2))
+        println(domainLabel)
+      }
+      else{
+        var tmp1=domainCoupF.filter(ed => ed._1==el.vid).map(ed => ed._2).toList
+        var tmp2=domainLabel.flatMap(l1 => tmp1.map(a => l1++List(a)))
+        domainLabel=tmp2
+      }
+      i=1
     }
-
     /*//dal grafo di input mi prendo le triple ((ids,at),(idd,at),at)) che compaino nel grafo e che rispettano la coopia
     //bisogna capire se conviene così, o con l'RDD nel main creato (approccio precdente))
     var temp=inputGraph.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr,e.attr))>0)
