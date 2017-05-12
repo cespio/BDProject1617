@@ -15,7 +15,6 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   var graph: MyGraphInput = graph_arg
   val thr = thr_arg
   val size = size_arg
-
   //function do define
   //frequent edges
 
@@ -26,7 +25,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   def candidateGeneration(freQE: RDD[(String, String, String)]):RDD[MyGraph]={
    //val temp1 = freQE.cartesian(freQE)
     var temp1 = freQE.cartesian(freQE).filter(el => (el._1._1 == el._2._2 && el._1._2 != el._2._1) || (el._1._2 == el._2._1 && el._1._1 != el._2._2) || (el._1._1 == el._2._1 && el._1._2 != el._2._2) || (el._1._2 == el._2._2 && el._1._1 != el._2._1))//.filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
-    val temp2 = temp1.flatMap(el => constructTheGraph(el))//.filter(el => el.nodes.length > 0).map(el => makeItUndirect(el))
+    val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length > 0).map(el => makeItUndirect(el))
     return temp2
     //Possibile ritorno del RDD
   }
@@ -364,7 +363,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
 
 
   //non se più necessario reduced couple
-  def CSPMapReduce(inputGraph: MyGraphInput, toVerify: MyGraph ):Int={
+  def CSPMapReduce(inputGraph: MyGraphInput, toVerify: MyGraph):mutable.MutableList[List[String]]={
     //ritorno le coopie del mio grafo
     var domainCoup=mutable.MutableList.empty[mutable.MutableList[(String,String)]]
     var domainLabel=mutable.MutableList.empty[List[String]]
@@ -372,14 +371,11 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     for(el <- couples){
       domainCoup+=inputGraph.retreiveDomainCouple(el)
     }
-    var domainCoupF=domainCoup.flatten
-    //*Sempre prima la label*//
+    var domainCoupF=domainCoup.flatten.distinct
     var i=0
     for(el <- toVerify.nodes){
-      if(i==0){
+      if(i==0)
         domainLabel=domainCoupF.filter( ed => ed._1==el.vid).map(ed => List(ed._2))
-        println(domainLabel)
-      }
       else{
         var tmp1=domainCoupF.filter(ed => ed._1==el.vid).map(ed => ed._2).toList
         var tmp2=domainLabel.flatMap(l1 => tmp1.map(a => l1++List(a)))
@@ -387,88 +383,23 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       }
       i=1
     }
-    /*//dal grafo di input mi prendo le triple ((ids,at),(idd,at),at)) che compaino nel grafo e che rispettano la coopia
-    //bisogna capire se conviene così, o con l'RDD nel main creato (approccio precdente))
-    var temp=inputGraph.subgraph(epred= e => couples.indexOf((e.srcAttr,e.dstAttr,e.attr))>0)
-    //Creao una lista di RDD, ogni label ha il suo rdd, poi proddocartesiano
-    var listRDD:mutable.MutableList[RDD[Int]]=mutable.MutableList.empty[RDD[Int]]
-    var domainRDD:RDD[List[Int]]=null
-    for(el <- toVerify.nodes) {
-      listRDD :+= temp.vertices.filter(v => v._2 == el.vid).map(v => v._1.toInt)
-    }
-    for(i <- 0 to listRDD.length-1){
-      println(i)
-      if(i==0) {
-        domainRDD = listRDD.get(i).get.map(el => List(el))
-      }
-      else {
-        var tmp=domainRDD.cartesian(listRDD.get(i).head).map(el=> el._1 ++ List(el._2))
-        domainRDD=tmp
-      }
-    }
-
-    /*var ret=domainRDD.map(el => checkGraph(toVerify,el,inputGraph))*/
-    //var ret=inputGraph.map(el => checkGraph(toVerify,el,inputGraph))
-    //ret.collect().foreach(print(_))
-    var array=domainRDD.collect()
-    for(dom <- array){
-      println("INIZIO LISTA")
-      dom.foreach(println(_))
-      print("FINE LISTA")
-      for(el <- toVerify.nodes){
-        var index1=toVerify.nodes.indexOf(el)
-        var n1=dom(index1)
-        for(nested <- el.adjencies){
-          //mi serve l'indice di el,l'indice di nested._1.id,per poi recuperare l'ordine in cui sono inseriti gli elementi nel dominio
-          //e poi controllar el'esistenza di su inputgraph -> there exist an edge between these two nodes with this arch weight?
-          //recupero l'id di el
-          var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el1 => el1.vid==nested._1.vid).head)
-          var n2=dom(index2)
-          println(index1)
-          println(index2)
-          if(inputGraph.triplets.filter( e => e.srcId.toString==n1 && e.dstId.toString==n2 && e.attr==nested._2).count()==0){
-            print("NO")
-          }
-        }
-      }
-      print("SI")
-
-    }
-    //DOMAINRDD hai tutte le possibili combinazioni di domini
-    //bisognerebbe strutturare una map((dominiocandidato),grafo,input)) -> ritornare zero o uno e poi sommare
-    //la funzione sopracitata ritorna 1 se il candidato compare nel grafo
-    */
-
-    return 0
+    return domainLabel
   }
 
 
-  def checkGraph(toVerify:MyGraph, dom:List[Int], inputGraph:Graph[String,String]){
-    println("INIZIO LISTA")
-    dom.foreach(println(_))
-    print("FINE LISTA")
+  def checkGraph(toVerify:MyGraph, dom:List[String], input: MyGraphInput):Int={
+
     for(el <- toVerify.nodes){
       var index1=toVerify.nodes.indexOf(el)
       var n1=dom(index1)
       for(nested <- el.adjencies){
-        //mi serve l'indice di el,l'indice di nested._1.id,per poi recuperare l'ordine in cui sono inseriti gli elementi nel dominio
-        //e poi controllar el'esistenza di su inputgraph -> there exist an edge between these two nodes with this arch weight?
-        //recupero l'id di el
         var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el1 => el1.vid==nested._1.vid).head)
         var n2=dom(index2)
-        println(index1)
-        println(index2)
-        if(inputGraph.triplets.filter( e => e.srcId.toString==n1 && e.dstId.toString==n2 && e.attr==nested._2).count()==0){
-          "0"
+        if(!input.edgeBool(dom(index1),dom(index2),nested._2)){
+          return 0
         }
       }
     }
-    "1"
+    return 1
   }
 }
-
-
-//2*DOMINI*//
-//3*RECUPERO NODI DA GRAPHX E CONTO CON I CANDDATI DOMINI*//
-//4*IL NUMERO DI POSSIBILI ASSEGNAMENTI DIVERSI é il numero di soluzioni**//
-//5*REVERSE MAP REDUCE. k=function(count) val DFS**/

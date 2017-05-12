@@ -43,8 +43,9 @@ object App extends Serializable{
     var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
     var arra:List[MyGraphInput]=List(graph)
     var arraRDD=sc.parallelize(arra)
-    var ris=candidate2.map(el=> frequentO.CSPMapReduce(graph,el))
-    ris.collect().foreach(el=>print(el))
+    var ris=candidateGen.map(el=> (el.dfscode,graph,el,(frequentO.CSPMapReduce(graph,el)))).flatMap(el=> el._4.map(a=>(el._1,el._2,el._3,a))).map(kkk=> (kkk._1,frequentO.checkGraph(kkk._3,kkk._4,kkk._2)))
+    var ris2=ris.reduceByKey((x,y)=>x+y)
+    ris2.collect().foreach(println(_))
     //candidate2.cartesian(arraRDD).foreach(el=> print(el))
     //prova.collect()
     //frequentO.CSPMapReduce(graph,candidateGen.collect().head)
@@ -117,6 +118,7 @@ object App extends Serializable{
     }
     return graphIn
   }
+
 }
 
 
