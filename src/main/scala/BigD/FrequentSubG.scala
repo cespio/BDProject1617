@@ -302,13 +302,17 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   //non se più necessario reduced couple
   def CSPMapReduce(inputGraph: MyGraphInput, toVerify: MyGraph):mutable.MutableList[List[String]]={
     //ritorno le coopie del mio grafo
+
     var domainCoup=mutable.MutableList.empty[mutable.MutableList[(String,String)]]
     var domainLabel=mutable.MutableList.empty[List[String]]
+
     var couples = toVerify.allCouples()
+    println(couples)
     for(el <- couples){
       domainCoup+=inputGraph.retreiveDomainCouple(el)
     }
     var domainCoupF=domainCoup.flatten.distinct
+    println(domainCoupF)
     var i=0
     for(el <- toVerify.nodes){
       if(i==0)
@@ -320,6 +324,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       }
       i=1
     }
+
     return domainLabel
   }
 
@@ -333,6 +338,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
         var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el1 => el1.vid==nested._1.vid).head)
         var n2=dom(index2)
         if(!input.edgeBool(dom(index1),dom(index2),nested._2)){
+
           return 0
         }
       }

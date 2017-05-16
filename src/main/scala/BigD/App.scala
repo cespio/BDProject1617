@@ -14,39 +14,48 @@ import scala.util.matching.Regex
 object App extends Serializable{
 
   def main(args : Array[String]) {
-    //val scanner=new Scanner(System.in)
-    println("Give me the thr -> ")
-    val thr=Console.readInt()
-    println("Give me the sizethr -> ")
-    val size=Console.readInt()
+    /*SparkConfiguration*/
     val conf = new SparkConf().setAppName("BigD").setMaster("local[4]")
     val sc = new SparkContext(conf)
-    //creazione graf con oggetto
+    /*Acquiring the input*/
+    println("Give me the threshold -> ")
+    val thr=Console.readInt()
+    println("Give me the size threshold-> ")
+    val size=Console.readInt()
+    /*Creating the graph from the input dot file*/
     var graph=builtGraphfromFile("data/graphGenOut0.dot")
     val frequentO=new FrequentSubG(graph,thr,size)
-    //var proova=sc.parallelize(frequentO)
-
+    /*RDD containing the frequentedges*/
     val frequentEdges: RDD[(String,String,String)]=frequentEdgesAPP(graph,sc,thr)
-    frequentEdges.collect().foreach(println(_))
-
+    /*First step generate the candidate with size at least two edges*/
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
-    //ELIMINAZIONE dei duplicati
-    var dfsred=candidateGen.map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a)
+    /*Clearing the one with the double DFSCode*/
+    candidateGen=candidateGen.map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
 
-
-    //ELIMINAZIONE dei candidati
-    var ite=2
-    while(ite<=size) {
-      var candidate2:RDD[MyGraph]=frequentO.extension(candidateGen,frequentEdges)
-      var app=candidate2.map(el=>el.makeItUndirect())
-      var dfsred1 = app.map(el => (el.dfscode, el)).reduceByKey((a, b) => a).map(el => el._2)
-      var ris = dfsred1.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(kkk => (kkk._1, frequentO.checkGraph(kkk._3, kkk._4, kkk._2)))
-      var ris2 = ris.reduceByKey((x, y) => x + y)
-      var ris3 = ris2.filter(o=>o._2 > thr).map(a=>a._1)
-      //candidateGen=dfsred1.filter(el => ris3.contains(el.dfscode))
-      ite+=1
+    var ris1=candidateGen.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
+    ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
+    /*Updating the new candiateGen*/
+    candidateGen=candidateGen.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
+    candidateGen.foreach(el=>el.toPrinit())
+    /*Number of iterations at least two*/
+    /*var itera=100
+    var candidate2:RDD[MyGraph]=null
+    var candidatePre:RDD[MyGraph]=candidateGen /*Where the result will be stored*/
+    frequentEdges.cache()
+    while(itera<size && candidatePre.count()!=0){
+      candidate2=frequentO.extension(candidateGen,frequentEdges)
+      /*Adding the DFSCode and removing the duplicate*/
+      candidate2=candidate2.map(el=>el.makeItUndirect()).map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
+      ris1=candidate2.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
+      ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
+      candidatePre=candidate2.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
+      if(candidatePre.count()!=0)
+        candidateGen=candidatePre
+      itera=itera+1
     }
 
+    println("Quello che abbiamo ottenuto dopo 4 iterazioni")
+    candidateGen.collect().foreach(el=>println(el.dfscode))*/
 
 
   }
