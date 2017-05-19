@@ -12,6 +12,10 @@ digraph prova{
 5 -> 3  [label="1"];
 5 -> 6  [label="1"];
 6 -> 5  [label="1"];
+8 -> 0  [label="1"];
+0 -> 8  [label="1"];
+9 -> 8  [label="1"];
+9 -> 2  [label="1"];
 0 [ label = " A " ]
 1 [ label = " B " ]
 2 [ label = " D " ]
@@ -20,4 +24,6 @@ digraph prova{
 5 [ label = " B " ]
 6 [ label = " C " ]
 7 [ label = " C " ]
+8 [ label = " B " ]
+9 [ label = " C " ]
 }

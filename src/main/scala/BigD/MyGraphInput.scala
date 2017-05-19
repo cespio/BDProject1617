@@ -43,7 +43,11 @@ class MyGraphInput extends Serializable{
   }
 
   def edgeBool(ids:String,idd:String,w:String):Boolean={
+    //println("PRINT THE IDS "+ids)
+    //println("PRINT THE IDD "+idd)
     var nodeS=nodes.filter(n=>n.vid==ids).head
+    //println("Node Sorgent "+nodeS.vid+" "+nodeS.label)
+
     return nodeS.adjencies.count(n=> n._1.vid==idd && n._2==w)==1
   }
 

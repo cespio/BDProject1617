@@ -130,16 +130,16 @@ class MyGraph() extends Serializable {
     }
 
   }
+
+  //TODO check it !!!!
   def confrontEdges(a:(Int,Int,String,String,String),b:(Int,Int,String,String,String)): Boolean = {
     if ((a._1 < a._2 && b._1 < b._2 && a._2 < b._2) || ((a._1 > a._2 && b._1 > b._2) && (a._1 < b._1 || a._1 == b._1)))  {
       //forwardedges
       return true;
     }
-    /*if (a._1 > a._2 && b._1 > b._2) {
-      if (a._1 < b._1 || a._1 == b._1 && a._2 < b._2) {
-        return true;
-      }
-    }*/
+    if (a._1 > a._2 && b._1 > b._2 && ((a._1 < b._1 || a._1 == b._1) && (a._2 < b._2))) {
+        return true
+    }
     else {
       if (a._1 > a._2 && b._1 < b._2) {
         //A backedges and B forwardedges

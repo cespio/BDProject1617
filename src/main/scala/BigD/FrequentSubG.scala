@@ -17,11 +17,23 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   val size = size_arg
 
   def candidateGeneration(freQE: RDD[(String, String, String)]):RDD[MyGraph]={
-   //val temp1 = freQE.cartesian(freQE)
-    var temp1 = freQE.cartesian(freQE).filter(el => (el._1._1 == el._2._2 && el._1._2 != el._2._1) || (el._1._2 == el._2._1 && el._1._1 != el._2._2) || (el._1._1 == el._2._1 && el._1._2 != el._2._2) || (el._1._2 == el._2._2 && el._1._1 != el._2._1))//.filter(el => boolCondition(el._1, el._2) && Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
-    val temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length > 0).map(el => el.makeItUndirect())
+    //var temp1 = freQE.cartesian(freQE).map(el => (makekey(el),el)).reduceByKey((x,y)=>x).map(el=>el._2).filter(el=> (el._1._1!=el._1._2)&&(el._2._1!=el._2._2))//.filter(el=> Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
+    //var temp1 = freQE.cartesian(freQE).filter(el => el._1!=el._2).filter(el=> Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
+    var temp1=freQE.cartesian(freQE).filter(el => compare(el._1,el._2)).filter(el=> Math.abs(el._1._3.toLong - el._2._3.toLong) <= 4)
+    var temp2 = temp1.flatMap(el => constructTheGraph(el)).filter(el => el.nodes.length > 0).map(el => el.makeItUndirect())
     return temp2
     //Possibile ritorno del RDD
+  }
+
+  def makekey(el:((String,String,String),(String,String,String))):String= {
+    var a = el._1._1 ++ el._1._2 ++ el._1._3 ++ el._2._1 ++ el._2._2 ++ el._2._3
+    return a.sorted
+  }
+
+  def compare(fst:(String,String,String),snd:(String,String,String)):Boolean={
+    var a=fst._1++fst._2++fst._3
+    var b=snd._1++snd._2++snd._3
+    return a<b
   }
 
   def boolCondition(arc1: (String, String, String), arc2: (String, String, String)): Boolean = {
@@ -33,15 +45,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   }
 
   def constructTheGraph(couple: ((String, String, String), (String, String, String))): mutable.MutableList[MyGraph] = {
-    var G = new MyGraph()
     var listRis: mutable.MutableList[MyGraph] = mutable.MutableList.empty[MyGraph]
     //print(" CASO 1 ")
-    //f ((fEdgesSet[i][0] == fEdgesSet[j][1]) and (fEdgesSet[i][1] == fEdgesSet [j][0]) and (fEdgesSet[i][0] != fEdgesSet [i][1]) and (fEdgesSet[j][0] != fEdgesSet [j][1])):
+    // ((fEdgesSet[i][0]==fEdgesSet[j][1])(fEdgesSet[i][1]==fEdgesSet [j][0])(fEdgesSet[i][0]!=fEdgesSet[i][1])(fEdgesSet[j][0]=fEdgesSet[j][1])):
     if ((couple._1._1 == couple._2._2) && (couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2)) {
-      //print(" IN CASO 1 ")
+
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._2._2)
-      G = new MyGraph()
+      var G = new MyGraph()
       V1.addEdge(V2, couple._1._3)
       V2.addEdge(V1, couple._2._3)
       G.addNode(V1)
@@ -52,11 +63,11 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 2 ")
     //((fEdgesSet[i][1] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][1]) ):
     if ((couple._1._2 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._2 != couple._2._1) && (couple._1._1 != couple._2._1) && (couple._1._1 != couple._2._2)) {
-      //print(" IN CASO 2 ")
+
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
-      G = new MyGraph()
+      var G = new MyGraph()
       V0.addEdge(V2, couple._2._3)
       V1.addEdge(V2, couple._1._3)
       G.addNode(V0)
@@ -67,11 +78,11 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 3 ")
     // ((fEdgesSet[i][0] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][0])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._1) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2)) {
-      //print(" IN CASO 3 ")
+
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
-      G = new MyGraph()
+      var G = new MyGraph()
       V0.addEdge(V1, couple._2._3)
       V1.addEdge(V2, couple._1._3)
       G.addNode(V0)
@@ -83,7 +94,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 4 ")
     // ((fEdgesSet[i][0] == fEdgesSet[j][0]) (fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][1]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._2) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2)) {
-      //print(" IN CASO 4 ")
+      //println("D")
       var V0 = new VertexAF(couple._1._1)
       var V1 = new VertexAF(couple._1._2)
       var V2 = new VertexAF(couple._2._2)
@@ -96,7 +107,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       listRis :+= (G)
     }
     //printf(" CASO 5")
-    if ((couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2) && (couple._1._1 != couple._2._1) && (couple._1._1 != couple._2._2)) {
+    /*if ((couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2) && (couple._1._1 != couple._2._1) && (couple._1._1 != couple._2._2)) {
       //print(" IN CASO 5")
       var V0 = new VertexAF(couple._1._1)
       var V1 = new VertexAF(couple._1._2)
@@ -108,7 +119,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       G.addNode(V1)
       G.addNode(V2)
       listRis :+= (G)
-    }
+    }*/
     return listRis
   }
 
@@ -219,7 +230,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     var partialGraphs = candidate.cartesian(freqE).filter(el => matching(el)).filter(el => labeling(el)).filter(el => hourGap(el)).map(el => categorize(el))
 
     var toExtend = partialGraphs.map(el => extendTheGraph(el))
-
+    println("ZIONE -> "+toExtend.count())
     //partialGraphs.collect().map(el=>println(el._1.visualRoot(), el._2, el._3))
     return toExtend
 
@@ -227,7 +238,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
 
   def extendTheGraph(triplet: (MyGraph, (String, String, String), Int)): MyGraph = {
 
-    var clone: MyGraph = triplet._1.myclone()
+    var clone: MyGraph = triplet._1
     /*println("----------------------")
     println("PRIMA ESTENSIONE GRAFO")
     println("----------------------")
@@ -294,7 +305,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     println("DOPO L'ESTENSIONE GRAFO")
     println("-----------------------")
     println(clone.toPrinit())*/
-    clone
+    return clone
   }
 
 
@@ -307,12 +318,11 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     var domainLabel=mutable.MutableList.empty[List[String]]
 
     var couples = toVerify.allCouples()
-    println(couples)
     for(el <- couples){
       domainCoup+=inputGraph.retreiveDomainCouple(el)
     }
     var domainCoupF=domainCoup.flatten.distinct
-    println(domainCoupF)
+
     var i=0
     for(el <- toVerify.nodes){
       if(i==0)
@@ -325,19 +335,24 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       i=1
     }
 
-    return domainLabel
+    return domainLabel.map(el=>el.distinct)
   }
 
 
   def checkGraph(toVerify:MyGraph, dom:List[String], input: MyGraphInput):Int={
-
+    //println("DOM "+dom)
+    if(dom.length!=toVerify.nodes.length){
+      return  0
+    }
     for(el <- toVerify.nodes){
       var index1=toVerify.nodes.indexOf(el)
       var n1=dom(index1)
       for(nested <- el.adjencies){
         var index2=toVerify.nodes.indexOf(toVerify.nodes.filter(el1 => el1.vid==nested._1.vid).head)
         var n2=dom(index2)
-        if(!input.edgeBool(dom(index1),dom(index2),nested._2)){
+        var rit=input.edgeBool(dom(index1),dom(index2),nested._2)
+        //println(rit)
+        if(!rit){
 
           return 0
         }

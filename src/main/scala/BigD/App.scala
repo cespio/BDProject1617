@@ -1,4 +1,5 @@
 package BigD
+import org.apache.log4j.Level
 import org.apache.spark.graphx.{Edge, Graph, VertexId}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -7,6 +8,8 @@ import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 import scala.util.matching.Regex
 
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
 
 /**
  * @author ${francesco.contaldo, graphX tries}
@@ -17,6 +20,8 @@ object App extends Serializable{
     /*SparkConfiguration*/
     val conf = new SparkConf().setAppName("BigD").setMaster("local[4]")
     val sc = new SparkContext(conf)
+    Logger.getLogger("org").setLevel(Level.OFF)
+    Logger.getLogger("akka").setLevel(Level.OFF)
     /*Acquiring the input*/
     println("Give me the threshold -> ")
     val thr=Console.readInt()
@@ -27,35 +32,64 @@ object App extends Serializable{
     val frequentO=new FrequentSubG(graph,thr,size)
     /*RDD containing the frequentedges*/
     val frequentEdges: RDD[(String,String,String)]=frequentEdgesAPP(graph,sc,thr)
+    println("FREQUENT EDGES "+frequentEdges.count())
     /*First step generate the candidate with size at least two edges*/
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
-    /*Clearing the one with the double DFSCode*/
-    candidateGen=candidateGen.map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
 
+    /*Clearing the one with the double DFSCode*/
+
+
+    candidateGen=candidateGen.map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
+    println("LENG "+candidateGen.count())
+    /*var to=candidateGen.collect()
+    var total=0
+    for(el1 <- to) {
+      total=0
+      var r = frequentO.CSPMapReduce(graph, el1)
+
+      print("\n")
+      for (el <- r) {
+
+        var a = frequentO.checkGraph(el1, el, graph)
+        /*if(a==1){
+          println("Assegnmaneto " + el)
+        }*/
+        total+=a
+        //println("Ris " + a)
+      }
+      if(total>=thr){
+        el1.toPrinit()
+      }
+    }*/
     var ris1=candidateGen.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
     ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
     /*Updating the new candiateGen*/
     candidateGen=candidateGen.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
-    candidateGen.foreach(el=>el.toPrinit())
+    println("dopo csp primo -> "+candidateGen.count())
+    //candidateGen.foreach(el=>el.toPrinit())
     /*Number of iterations at least two*/
-    /*var itera=100
+    var itera=2
     var candidate2:RDD[MyGraph]=null
     var candidatePre:RDD[MyGraph]=candidateGen /*Where the result will be stored*/
     frequentEdges.cache()
     while(itera<size && candidatePre.count()!=0){
+      println("Entro nel cicloo\n")
       candidate2=frequentO.extension(candidateGen,frequentEdges)
       /*Adding the DFSCode and removing the duplicate*/
       candidate2=candidate2.map(el=>el.makeItUndirect()).map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
+      println("INTEREMEDIA lunghezza "+candidate2.count())
       ris1=candidate2.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
       ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
       candidatePre=candidate2.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
       if(candidatePre.count()!=0)
         candidateGen=candidatePre
       itera=itera+1
+      print("ITERA "+itera)
     }
 
-    println("Quello che abbiamo ottenuto dopo 4 iterazioni")
-    candidateGen.collect().foreach(el=>println(el.dfscode))*/
+    println("Quello che abbiamo ottenuto dopo"+itera+" iterazioni")
+    //candidateGen.collect().foreach(el=>{println(el.dfscode);el.toPrinit()})
+    println("NUMBER OF SOLUTION -> "+candidateGen.count())
 
 
   }
@@ -83,7 +117,7 @@ object App extends Serializable{
     var nodeS:VertexAFInput=null
     var nodeD:VertexAFInput=null
     val patternE=new Regex("[0-9]+ [\\[label=]")
-    for(line <- scala.io.Source.fromFile("data/graphGenOut0.dot").getLines()){
+    for(line <- scala.io.Source.fromFile("data/graphGenOut.dot").getLines()){
       if(line!="digraph prova{" && line!="}"){ //se la linea è diversa da inizio e fine allora costruisci il grafo
         if(patternE.findFirstMatchIn(line)==None){
           var splitted=line.trim().split("[^0-9]+")
