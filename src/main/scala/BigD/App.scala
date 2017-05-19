@@ -66,6 +66,7 @@ object App extends Serializable{
     /*Updating the new candiateGen*/
     candidateGen=candidateGen.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
     println("dopo csp primo -> "+candidateGen.count())
+    candidateGen.foreach(el => println(el.dfscode))
     //candidateGen.foreach(el=>el.toPrinit())
     /*Number of iterations at least two*/
     var itera=2

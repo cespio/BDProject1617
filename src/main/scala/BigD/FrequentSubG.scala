@@ -46,10 +46,11 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
 
   def constructTheGraph(couple: ((String, String, String), (String, String, String))): mutable.MutableList[MyGraph] = {
     var listRis: mutable.MutableList[MyGraph] = mutable.MutableList.empty[MyGraph]
+
     //print(" CASO 1 ")
     // ((fEdgesSet[i][0]==fEdgesSet[j][1])(fEdgesSet[i][1]==fEdgesSet [j][0])(fEdgesSet[i][0]!=fEdgesSet[i][1])(fEdgesSet[j][0]=fEdgesSet[j][1])):
     if ((couple._1._1 == couple._2._2) && (couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2)) {
-
+      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("A")
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._2._2)
       var G = new MyGraph()
@@ -63,7 +64,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 2 ")
     //((fEdgesSet[i][1] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][1]) ):
     if ((couple._1._2 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._2 != couple._2._1) && (couple._1._1 != couple._2._1) && (couple._1._1 != couple._2._2)) {
-
+      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("B")
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
@@ -78,7 +79,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 3 ")
     // ((fEdgesSet[i][0] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][0])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._1) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2)) {
-
+      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("C")
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
@@ -94,7 +95,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 4 ")
     // ((fEdgesSet[i][0] == fEdgesSet[j][0]) (fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][1]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._2) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2)) {
-      //println("D")
+      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("D")
       var V0 = new VertexAF(couple._1._1)
       var V1 = new VertexAF(couple._1._2)
       var V2 = new VertexAF(couple._2._2)
@@ -229,28 +230,29 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
 
     var partialGraphs = candidate.cartesian(freqE).filter(el => matching(el)).filter(el => labeling(el)).filter(el => hourGap(el)).map(el => categorize(el))
 
-    var toExtend = partialGraphs.map(el => extendTheGraph(el))
+    var toExtend = partialGraphs.flatMap(el => extendTheGraph(el))
     println("ZIONE -> "+toExtend.count())
     //partialGraphs.collect().map(el=>println(el._1.visualRoot(), el._2, el._3))
     return toExtend
 
   }
 
-  def extendTheGraph(triplet: (MyGraph, (String, String, String), Int)): MyGraph = {
-
-    var clone: MyGraph = triplet._1
+  def extendTheGraph(triplet: (MyGraph, (String, String, String), Int)): mutable.MutableList[MyGraph] = {
+    var listR: mutable.MutableList[MyGraph]=mutable.MutableList.empty[MyGraph]
     /*println("----------------------")
     println("PRIMA ESTENSIONE GRAFO")
     println("----------------------")
     println(clone.toPrinit(), triplet._2)*/
 
     if (triplet._3 == 1) {
+      var clone: MyGraph = triplet._1.myclone()
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._1) {
             var newVertex = new VertexAF(triplet._2._2)
             i.addEdge(newVertex, triplet._2._3)
             clone.addNode(newVertex)
+            listR:+=clone
             break
           }
         }
@@ -259,12 +261,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     }
 
     if (triplet._3 == 2) {
+      var clone: MyGraph = triplet._1.myclone()
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._2) {
             var newVertex = new VertexAF(triplet._2._1)
-            newVertex.addEdge(i, triplet._2._3)
             clone.addNode(newVertex)
+            newVertex.addEdge(i, triplet._2._3)
+            listR:+=clone
             break
           }
         }
@@ -272,12 +276,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     }
 
     if (triplet._3 == 3) {
+      var clone: MyGraph = triplet._1.myclone()
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._1) {
             for (j <- i.adjencies) {
               if (j._1.vid == triplet._2._2) {
                 i.addEdge(j._1, triplet._2._3)
+                listR:+=clone
                 break
               }
             }
@@ -287,12 +293,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     }
 
     if (triplet._3 == 4) {
+      var clone: MyGraph = triplet._1.myclone()
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._2) {
             for (j <- i.adjencies) {
               if (j._1.vid == triplet._2._1) {
                 j._1.addEdge(i, triplet._2._3)
+                listR:+=clone
                 break
               }
             }
@@ -305,7 +313,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     println("DOPO L'ESTENSIONE GRAFO")
     println("-----------------------")
     println(clone.toPrinit())*/
-    return clone
+    return listR
   }
 
 
