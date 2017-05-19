@@ -50,7 +50,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 1 ")
     // ((fEdgesSet[i][0]==fEdgesSet[j][1])(fEdgesSet[i][1]==fEdgesSet [j][0])(fEdgesSet[i][0]!=fEdgesSet[i][1])(fEdgesSet[j][0]=fEdgesSet[j][1])):
     if ((couple._1._1 == couple._2._2) && (couple._1._2 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._2._1 != couple._2._2)) {
-      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("A")
+      //println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("A")
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._2._2)
       var G = new MyGraph()
@@ -64,7 +64,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 2 ")
     //((fEdgesSet[i][1] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][0]) and (fEdgesSet[i][0] != fEdgesSet[j][1]) ):
     if ((couple._1._2 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._2 != couple._2._1) && (couple._1._1 != couple._2._1) && (couple._1._1 != couple._2._2)) {
-      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("B")
+      //println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("B")
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
@@ -79,7 +79,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 3 ")
     // ((fEdgesSet[i][0] == fEdgesSet[j][1])(fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][0])(fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._2) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._1) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2)) {
-      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("C")
+      //println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("C")
       var V0 = new VertexAF(couple._2._1)
       var V1 = new VertexAF(couple._1._1)
       var V2 = new VertexAF(couple._1._2)
@@ -95,7 +95,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     //print(" CASO 4 ")
     // ((fEdgesSet[i][0] == fEdgesSet[j][0]) (fEdgesSet[i][0] != fEdgesSet[i][1]) (fEdgesSet[i][0] != fEdgesSet[j][1]) and (fEdgesSet[i][1] != fEdgesSet[j][0]) and (fEdgesSet[i][1] != fEdgesSet[j][1]) ):
     if ((couple._1._1 == couple._2._1) && (couple._1._1 != couple._1._2) && (couple._1._1 != couple._2._2) && (couple._1._2 != couple._2._1) && (couple._1._2 != couple._2._2)) {
-      println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("D")
+      //println("("++couple._1._1++","++couple._1._2++","++couple._1._3 ++") ("++ couple._2._1++","++couple._2._2++","++couple._2._3++")");print("D")
       var V0 = new VertexAF(couple._1._1)
       var V1 = new VertexAF(couple._1._2)
       var V2 = new VertexAF(couple._2._2)
@@ -122,6 +122,43 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       listRis :+= (G)
     }*/
     return listRis
+  }
+
+  def newExtension(candidate: RDD[MyGraph], freqE: RDD[(String, String, String)]): RDD[MyGraph] = {
+    var filteredFE:RDD[(String,String,String)]=freqE.filter(el => el._1!=el._2)
+    var toExtend=candidate.cartesian(filteredFE).map(el => complexExt(el._1,el._2))
+    return toExtend
+  }
+
+  def complexExt(cand:MyGraph,edge:(String,String,String)): MyGraph ={
+    //TODO massimo e minimo come in data mining -> la modifica della struttura myGraph
+    var candidate=cand.myclone()
+    print("PER UN CANDIDATO  ")
+    var sor:mutable.MutableList[VertexAF]=candidate.nodes.filter(el=> el.vid==edge._1)
+    var des:mutable.MutableList[VertexAF]=candidate.nodes.filter(el=> el.vid==edge._2)
+
+    if(sor.length==1 && des.length==0){ //se matcho sorgente e non destinazione
+      print("A")
+      var toadd=new VertexAF(edge._2)
+      //ci potrebbe stare il clone come no
+      var nodo=sor.head
+      nodo.addEdge(toadd,edge._3)
+    }
+    if(sor.length==0 && des.length==1){ //se matcho sorgente e non destinazione
+      print("B")
+      var toadd=new VertexAF(edge._1)
+      //ci potrebbe stare il clone come no
+      var nodo=des.head
+      nodo.addEdge(toadd,edge._3)
+    }
+    if(sor.length==1 && des.length==1){ //se matcho sorgente e non destinazione
+      print("C")
+      //devo verificare prima che non siano linkati tra di loro
+      if(sor.head.adjencies.count(el => el._1.vid==des.head.vid) ==0){
+        sor.head.addEdge(des.head,edge._3)
+      }
+    }
+    return candidate
   }
 
   /*Candidate Generation complex*/
@@ -227,11 +264,12 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
         return false
     }
 
-
-    var partialGraphs = candidate.cartesian(freqE).filter(el => matching(el)).filter(el => labeling(el)).filter(el => hourGap(el)).map(el => categorize(el))
-
+    var filteredFE=freqE.filter(el => el._1!=el._2)
+    var partialGraphs = candidate.cartesian(filteredFE).filter(el => matching(el)).filter(el => labeling(el)).filter(el => hourGap(el)).map(el => categorize(el))
+    println("LUNGHEZZA partial graph "+partialGraphs.count())
     var toExtend = partialGraphs.flatMap(el => extendTheGraph(el))
     println("ZIONE -> "+toExtend.count())
+
     //partialGraphs.collect().map(el=>println(el._1.visualRoot(), el._2, el._3))
     return toExtend
 
@@ -245,13 +283,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     println(clone.toPrinit(), triplet._2)*/
 
     if (triplet._3 == 1) {
-      var clone: MyGraph = triplet._1.myclone()
+      var clone: MyGraph = triplet._1
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._1) {
             var newVertex = new VertexAF(triplet._2._2)
             i.addEdge(newVertex, triplet._2._3)
             clone.addNode(newVertex)
+           // println("Caso 1, sorg = "+i.vid+", dest = "+triplet._2._2+", tripla = "+triplet._2+", DFS = "+clone.dfscode)
             listR:+=clone
             break
           }
@@ -261,13 +300,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     }
 
     if (triplet._3 == 2) {
-      var clone: MyGraph = triplet._1.myclone()
+      var clone: MyGraph = triplet._1
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._2) {
             var newVertex = new VertexAF(triplet._2._1)
             clone.addNode(newVertex)
             newVertex.addEdge(i, triplet._2._3)
+            //println("Caso 2, sorg = "+i.vid+", dest = "+triplet._2._2+", tripla = "+triplet._2+", DFS = "+clone.dfscode)
             listR:+=clone
             break
           }
@@ -276,13 +316,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     }
 
     if (triplet._3 == 3) {
-      var clone: MyGraph = triplet._1.myclone()
+      var clone: MyGraph = triplet._1
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._1) {
             for (j <- i.adjencies) {
               if (j._1.vid == triplet._2._2) {
                 i.addEdge(j._1, triplet._2._3)
+               // println("Caso 3, sorg = "+i.vid+", dest = "+triplet._2._2+", tripla = "+triplet._2+", DFS = "+clone.dfscode)
                 listR:+=clone
                 break
               }
@@ -293,13 +334,14 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     }
 
     if (triplet._3 == 4) {
-      var clone: MyGraph = triplet._1.myclone()
+      var clone: MyGraph = triplet._1
       breakable {
         for (i <- clone.nodes) {
           if (i.vid == triplet._2._2) {
             for (j <- i.adjencies) {
               if (j._1.vid == triplet._2._1) {
                 j._1.addEdge(i, triplet._2._3)
+              //  println("Caso 1, sorg = "+i.vid+", dest = "+triplet._2._2+", tripla = "+triplet._2+", DFS = "+clone.dfscode)
                 listR:+=clone
                 break
               }

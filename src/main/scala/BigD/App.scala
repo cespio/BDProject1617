@@ -65,7 +65,7 @@ object App extends Serializable{
     ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
     /*Updating the new candiateGen*/
     candidateGen=candidateGen.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
-    println("dopo csp primo -> "+candidateGen.count())
+    //println("dopo csp primo -> "+candidateGen.count())
     candidateGen.foreach(el => println(el.dfscode))
     //candidateGen.foreach(el=>el.toPrinit())
     /*Number of iterations at least two*/
@@ -75,7 +75,7 @@ object App extends Serializable{
     frequentEdges.cache()
     while(itera<size && candidatePre.count()!=0){
       println("Entro nel cicloo\n")
-      candidate2=frequentO.extension(candidateGen,frequentEdges)
+      candidate2=frequentO.newExtension(candidateGen,frequentEdges)
       /*Adding the DFSCode and removing the duplicate*/
       candidate2=candidate2.map(el=>el.makeItUndirect()).map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
       println("INTEREMEDIA lunghezza "+candidate2.count())

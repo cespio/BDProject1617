@@ -201,6 +201,7 @@ class MyGraph() extends Serializable {
         app.addEdge(toAdd,el1._2)
       }
     }
+    //ret.dfscode=this.dfscode
     return ret
   }
 
