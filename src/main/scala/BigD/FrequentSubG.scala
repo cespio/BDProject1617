@@ -74,6 +74,8 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       G.addNode(V0)
       G.addNode(V1)
       G.addNode(V2)
+      G.maxH=Math.max(couple._1._3.toInt,couple._2._3.toInt)
+      G.minH=Math.min(couple._1._3.toInt,couple._2._3.toInt)
       listRis :+= (G)
     }
     //print(" CASO 3 ")
@@ -89,6 +91,8 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       G.addNode(V0)
       G.addNode(V1)
       G.addNode(V2)
+      G.maxH=Math.max(couple._1._3.toInt,couple._2._3.toInt)
+      G.minH=Math.min(couple._1._3.toInt,couple._2._3.toInt)
       listRis :+= (G)
 
     }
@@ -105,6 +109,8 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       G.addNode(V0)
       G.addNode(V1)
       G.addNode(V2)
+      G.maxH=Math.max(couple._1._3.toInt,couple._2._3.toInt)
+      G.minH=Math.min(couple._1._3.toInt,couple._2._3.toInt)
       listRis :+= (G)
     }
     //printf(" CASO 5")
@@ -126,39 +132,79 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
 
   def newExtension(candidate: RDD[MyGraph], freqE: RDD[(String, String, String)]): RDD[MyGraph] = {
     var filteredFE:RDD[(String,String,String)]=freqE.filter(el => el._1!=el._2)
-    var toExtend=candidate.cartesian(filteredFE).map(el => complexExt(el._1,el._2))
+
+   // var verifica=candidate.cartesian(filteredFE).map(el => complexExt(el._1,el._2)).map(el => (el._2.dfscode,el._1)).filter(el => el._2==1).foreach(el => println(el))
+    var toExtend=candidate.cartesian(filteredFE).map(el => complexExt(el._1,el._2)).filter(el => el._1==1).map(el => el._2)//.foreach(el=>println(el.dfscode))
     return toExtend
   }
 
-  def complexExt(cand:MyGraph,edge:(String,String,String)): MyGraph ={
+  def complexExt(cand:MyGraph,edge:(String,String,String)): (Int,MyGraph) ={
     //TODO massimo e minimo come in data mining -> la modifica della struttura myGraph
     var candidate=cand.myclone()
-    print("PER UN CANDIDATO  ")
+    candidate.dfscode=cand.dfscode
+    candidate.maxH=cand.maxH
+    candidate.minH=cand.minH
+    var hourPass=0
+    var flag=0
+    var nEdge=edge._3.toInt
     var sor:mutable.MutableList[VertexAF]=candidate.nodes.filter(el=> el.vid==edge._1)
     var des:mutable.MutableList[VertexAF]=candidate.nodes.filter(el=> el.vid==edge._2)
-
-    if(sor.length==1 && des.length==0){ //se matcho sorgente e non destinazione
-      print("A")
-      var toadd=new VertexAF(edge._2)
-      //ci potrebbe stare il clone come no
-      var nodo=sor.head
-      nodo.addEdge(toadd,edge._3)
-    }
-    if(sor.length==0 && des.length==1){ //se matcho sorgente e non destinazione
-      print("B")
-      var toadd=new VertexAF(edge._1)
-      //ci potrebbe stare il clone come no
-      var nodo=des.head
-      nodo.addEdge(toadd,edge._3)
-    }
-    if(sor.length==1 && des.length==1){ //se matcho sorgente e non destinazione
-      print("C")
-      //devo verificare prima che non siano linkati tra di loro
-      if(sor.head.adjencies.count(el => el._1.vid==des.head.vid) ==0){
-        sor.head.addEdge(des.head,edge._3)
+    if((candidate.maxH-candidate.minH)==4){
+      if(nEdge<=candidate.maxH && nEdge >=candidate.minH){
+        hourPass=1
       }
     }
-    return candidate
+    else{
+      if(nEdge< candidate.minH && (candidate.maxH-nEdge)<=4){
+        hourPass=1
+        candidate.minH=nEdge
+      }
+      else{
+        if(nEdge>candidate.maxH && (nEdge-candidate.minH)<=4){
+          hourPass=1
+          candidate.maxH=nEdge
+        }
+      }
+
+    }
+    if(hourPass==1) {
+      if (sor.length == 1 && des.length == 0 && flag==0) { //se matcho sorgente e non destinazione
+        flag = 1
+        var toadd = new VertexAF(edge._2)
+        //ci potrebbe stare il clone come no
+        println(candidate.dfscode+" caso 1 "+edge)
+        var nodo = sor.head
+        candidate.addNode(toadd)
+        nodo.addEdge(toadd,edge._3)
+
+      }
+      if (sor.length == 0 && des.length == 1 && flag==0) { //se matcho sorgente e non destinazione
+        flag = 1
+        var toadd = new VertexAF(edge._1)
+        var nodo = des.head
+        println(candidate.dfscode+" caso 2 "+edge)
+        candidate.addNode(toadd)
+        toadd.addEdge(nodo, edge._3)
+
+      }
+      if (sor.length == 1 && des.length == 1 && flag==0) { //se matcho sorgente e non destinazione
+
+        //devo verificare prima che non siano linkati tra di loro
+        if (sor.head.adjencies.count(el => el._1.vid == des.head.vid) == 0) {
+          flag = 1
+          println(candidate.dfscode+" caso 3a "+edge)
+          sor.head.addEdge(des.head, edge._3)
+        }
+        /*else{
+          if(des.head.adjencies.count(el => el._1.vid == sor.head.vid) == 0){
+            println(candidate.dfscode+" caso 3b "+edge)
+            des.head.addEdge(sor.head, edge._3)
+          }
+        }*/
+
+      }
+    }
+    return (flag,candidate)
   }
 
   /*Candidate Generation complex*/

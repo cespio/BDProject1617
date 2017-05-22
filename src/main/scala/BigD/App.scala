@@ -65,9 +65,9 @@ object App extends Serializable{
     ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
     /*Updating the new candiateGen*/
     candidateGen=candidateGen.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
-    //println("dopo csp primo -> "+candidateGen.count())
-    candidateGen.foreach(el => println(el.dfscode))
-    //candidateGen.foreach(el=>el.toPrinit())
+    println("dopo csp primo -> "+candidateGen.count())
+    candidateGen.foreach(el=>{println(el.dfscode+"\n");el.toPrinit()})
+
     /*Number of iterations at least two*/
     var itera=2
     var candidate2:RDD[MyGraph]=null
@@ -79,9 +79,16 @@ object App extends Serializable{
       /*Adding the DFSCode and removing the duplicate*/
       candidate2=candidate2.map(el=>el.makeItUndirect()).map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
       println("INTEREMEDIA lunghezza "+candidate2.count())
+      println("CANDIDATI DOPO GENERAZIONE ")
+      candidate2.collect().foreach(el=> println(el.dfscode))
+      candidate2.collect().foreach(el=> {println(el.dfscode+"\n");el.toPrinit()})
       ris1=candidate2.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
+      //ris1.foreach(el => println(el._1))
       ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
+      println("Quanto count "+ris1.count())
+      ris1.foreach(el => println(el._1))
       candidatePre=candidate2.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
+      println("ZKL "+candidatePre.count())
       if(candidatePre.count()!=0)
         candidateGen=candidatePre
       itera=itera+1
@@ -89,7 +96,7 @@ object App extends Serializable{
     }
 
     println("Quello che abbiamo ottenuto dopo"+itera+" iterazioni")
-    //candidateGen.collect().foreach(el=>{println(el.dfscode);el.toPrinit()})
+    candidateGen.collect().foreach(el => println(el.dfscode))
     println("NUMBER OF SOLUTION -> "+candidateGen.count())
 
 

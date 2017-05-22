@@ -10,17 +10,17 @@ import scala.collection.mutable.MutableList
 class MyGraph() extends Serializable {
   var nodes: MutableList[VertexAF]=MutableList.empty[VertexAF];
   var dfscode: String="" /*Se la stringa è vuota DFSCode non ancora implementato*/
+  var maxH=0
+  var minH=0
   def addNode(el:VertexAF) {
     nodes+:= el
   }
 //prova/
   def minDFS(strugglers:MutableList[(String,String)],inG:MutableList[VertexAF]): String ={
     var source=this.nodes.sortBy(el=>el.vid).head
-    //println("NEW FUCKING VISIT")
     var visit=DFSVisit(source,strugglers,inG)
     mergeSorted(visit,0,visit.length-1)
     var s=visitToString(visit)
-    //println("\nDFSCODE -> "+s)
     return s
 //
   }
@@ -45,12 +45,13 @@ class MyGraph() extends Serializable {
     var sorted_neighb=node.adjencies.sortBy(el=>el._1.vid)
     //println("SONO IN "+node.vid)
     for(cand <- sorted_neighb){
-      //println("HO "+cand._1.vid)
+     // println("HO "+cand._1.vid)
       if(!discovery.keys.exists(p => p==cand._1.vid)) {
         discovery(cand._1.vid) = discovery.count(el => true)
         couple.+=:(node.vid,cand._1.vid) //padre-> figlio
-        couple.+=:(cand._1.vid,node.vid) //padre-> figlio
+        couple.+=:(cand._1.vid,node.vid) //padre->
         var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el => el._1.vid==cand._1.vid)
+       // println("minchia pure")
         if(adJAtt.length>0){
           visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
           if(strugglers.contains(cand._1.vid,node.vid)){
@@ -133,11 +134,11 @@ class MyGraph() extends Serializable {
 
   //TODO check it !!!!
   def confrontEdges(a:(Int,Int,String,String,String),b:(Int,Int,String,String,String)): Boolean = {
-    if ((a._1 < a._2 && b._1 < b._2 && a._2 < b._2) || ((a._1 > a._2 && b._1 > b._2) && (a._1 < b._1 || a._1 == b._1)))  {
+    if (a._1 < a._2 && b._1 < b._2 && a._2 < b._2) {
       //forwardedges
-      return true;
+      return true
     }
-    if (a._1 > a._2 && b._1 > b._2 && ((a._1 < b._1 || a._1 == b._1) && (a._2 < b._2))) {
+    if (a._1 > a._2 && b._1 > b._2 && ( a._1 < b._1 || (a._1 == b._1 && a._2 < b._2))) {
         return true
     }
     else {
@@ -258,9 +259,9 @@ class MyGraph() extends Serializable {
       }
     }
     var code = ""
-
-    if (un_G.nodes.length != 0)
+    if (un_G.nodes.length != 0) {
       code = un_G.minDFS(strugglers, this.nodes.clone())
+    }
     this.dfscode = code
     return this
   }
