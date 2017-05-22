@@ -43,9 +43,9 @@ class MyGraph() extends Serializable {
   /*Impostare anzichè il time la lunghezza dei nodi scoperti*/
   def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)],strugglers: MutableList[(String,String)],inG: MutableList[VertexAF]) {
     var sorted_neighb=node.adjencies.sortBy(el=>el._1.vid)
-    //println("SONO IN "+node.vid)
+   // println("SONO IN "+node.vid)
     for(cand <- sorted_neighb){
-     // println("HO "+cand._1.vid)
+     //println("HO "+cand._1.vid)
       if(!discovery.keys.exists(p => p==cand._1.vid)) {
         discovery(cand._1.vid) = discovery.count(el => true)
         couple.+=:(node.vid,cand._1.vid) //padre-> figlio
@@ -55,8 +55,10 @@ class MyGraph() extends Serializable {
         if(adJAtt.length>0){
           visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
           if(strugglers.contains(cand._1.vid,node.vid)){
-            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
+            var w=inG.filter(el=>el.vid==cand._1.vid).head.adjencies.filter(el=>el._1.vid==node.vid).head._2
+            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,w,node.vid)) //TODO weight
           }
+
 
         }
         else{
@@ -82,7 +84,9 @@ class MyGraph() extends Serializable {
         }
         else{
           if(strugglers.contains(cand._1.vid,node.vid)){
-            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
+            var w=inG.filter(el=>el.vid==cand._1.vid).head.adjencies.filter(el=>el._1.vid==node.vid).head._2
+            //strugglers=strugglers.filter(el=>el!=(cand._1.vid,node.vid))
+            visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,w,cand._1.vid)) ///todo cambio di posizione node/cand._1
           }
         }
       }
@@ -108,26 +112,26 @@ class MyGraph() extends Serializable {
     var app:MutableList[(Int,Int,String,String,String)]=MutableList.empty[(Int,Int,String,String,String)]
     while(i<=mid && j<=tail){
       if(confrontEdges(visit.get(i).head,visit.get(j).head)){
-        app:+=visit(i)
+        app+=visit(i)
         i+=1
       }
       else{
-        app:+=visit(j)
+        app+=visit(j)
         j+=1
       }
     }
     while(i<=mid) {
-      app:+=visit(i)
+      app+=visit(i)
       i += 1
     }
     while(j<=tail) {
-      app:+=visit(j)
+      app+=visit(j)
       j += 1
     }
     var k=head
     while(k<=tail) {
-      visit(k) = app(k - head)
-      k += 1
+      visit(k)=app(k - head)
+      k+=1
     }
 
   }
@@ -217,7 +221,6 @@ class MyGraph() extends Serializable {
   }
 
 
-  //TODO verify if it is possible to move this function inside the MyGraph class.
   def makeItUndirect():MyGraph={
     var un_G = new MyGraph();
     var strugglers: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
@@ -225,7 +228,7 @@ class MyGraph() extends Serializable {
     var S: VertexAF = null;
     var D: VertexAF = null;
     var nodes = this.nodes
-    for (el <- nodes) {
+    for (el <- nodes.sortBy(el=>el.vid)) {
       if (un_G.nodes.count(f => f.vid == el.vid) >= 1) {
         S = un_G.nodes.filter(f => f.vid == el.vid).head
       }
@@ -233,7 +236,7 @@ class MyGraph() extends Serializable {
         S = new VertexAF(el.vid)
         un_G.addNode(S)
       }
-      for (el1 <- el.adjencies) {
+      for (el1 <- el.adjencies.sortBy(el=>el._1.vid)) {
         if (!couple.contains(el.vid, el1._1.vid) && !couple.contains(el1._1.vid, el.vid)) {
           if (un_G.nodes.count(f => f.vid == el1._1.vid) >= 1) {
             D = un_G.nodes.filter(f => f.vid == el1._1.vid).head
@@ -258,6 +261,10 @@ class MyGraph() extends Serializable {
         }
       }
     }
+    //println("UNDIRECTED")
+   // un_G.toPrinit()
+    //println("ITSTRUGGLED")
+    //strugglers.foreach(el=>println(el))
     var code = ""
     if (un_G.nodes.length != 0) {
       code = un_G.minDFS(strugglers, this.nodes.clone())

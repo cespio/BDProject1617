@@ -81,7 +81,7 @@ object App extends Serializable{
       println("INTEREMEDIA lunghezza "+candidate2.count())
       println("CANDIDATI DOPO GENERAZIONE ")
       candidate2.collect().foreach(el=> println(el.dfscode))
-      candidate2.collect().foreach(el=> {println(el.dfscode+"\n");el.toPrinit()})
+      candidate2.collect().foreach(el=> {println("\n"+el.dfscode+"\n");el.toPrinit()})
       ris1=candidate2.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
       //ris1.foreach(el => println(el._1))
       ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
