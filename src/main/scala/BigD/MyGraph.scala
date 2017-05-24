@@ -138,31 +138,53 @@ class MyGraph() extends Serializable {
 
   //TODO check it !!!!
   def confrontEdges(a:(Int,Int,String,String,String),b:(Int,Int,String,String,String)): Boolean = {
+    //println(a+" "+b)
     if (a._1 < a._2 && b._1 < b._2 && a._2 < b._2) {
-      //forwardedges
       return true
     }
-    if (a._1 > a._2 && b._1 > b._2 && ( a._1 < b._1 || (a._1 == b._1 && a._2 < b._2))) {
-        return true
+    else{
+      if(a._1 < a._2 && b._1 < b._2 && a._2==b._2){
+        var strA=a._3++a._4++a._5
+        var strB=b._3++b._4++b._5
+        if(strA<strB) {
+          return true
+        }
+        else{
+          return false
+        }
+      }
+    }
+    if (a._1 > a._2 && b._1 > b._2 && a._1 < b._1) {
+      return true
     }
     else {
-      if (a._1 > a._2 && b._1 < b._2) {
-        //A backedges and B forwardedges
-        if (a._1 < b._2) {
-          return true;
+      if (a._1 > a._2 && b._1 > b._2 && a._1 == b._1){
+        var strA=a._3++a._4++a._5
+        var strB=b._3++b._4++b._5
+        if(strA<strB) {
+          return true
         }
-        else {
-          if (a._1 < a._2 && b._1 > b._2) {
-            //#A forwardedges and B backedges
-            if (a._2 <= b._1) {
-              return true;
-            }
+        else{
+          return false
+        }
+      }
+    }
+    if (a._1 > a._2 && b._1 < b._2) {
+      if (a._1 < b._2) {
+        return true
+      }
+      else {
+        if (a._1 < a._2 && b._1 > b._2) {
+          if (a._2 <= b._1) {
+            return true
           }
         }
       }
-      return false;
     }
+    //println("FALSE")
+    return false
   }
+
 
   def visitToString(mutableList: MutableList[(Int,Int,String,String,String)]):String ={
     var str=""
