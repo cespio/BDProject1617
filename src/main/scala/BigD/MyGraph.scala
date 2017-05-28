@@ -19,8 +19,14 @@ class MyGraph() extends Serializable {
   def minDFS(strugglers:MutableList[(String,String)],inG:MutableList[VertexAF]): String ={
     var source=this.nodes.sortBy(el=>el.vid).head
     var visit=DFSVisit(source,strugglers,inG)
-    mergeSorted(visit,0,visit.length-1)
-    var s=visitToString(visit)
+    //var visit1=visit.sortWith(confrontEdges)
+    var visit1=visit.sortWith((a,b) => (a._1<b._1 || (a._1==b._1 && a._2<b._2)))
+    //mergeSorted(visit,0,visit.length-1)
+    var s=visitToString(visit1)
+    /*if(s == "10Urban3Movement21Social0Urban12Urban1Social"){
+      println("DIOOOOOOOOOOOOOOOOOOOOOO    ")
+      visit.foreach(el=>print(el))
+    }*/
     return s
 //
   }
@@ -34,7 +40,8 @@ class MyGraph() extends Serializable {
     discovery(source.vid)=time
     //println("INIZIO DA "+source.vid)
     DFS(discovery,source,time+1,visit,couple,strugglers,inG)
-    //print(visit.mkString("\n"))
+    //print(visit.mkString("\n")
+   // visit.foreach(el=>print(el))
     return visit
 
   }
@@ -43,18 +50,21 @@ class MyGraph() extends Serializable {
   /*Impostare anzichè il time la lunghezza dei nodi scoperti*/
   def DFS(discovery: collection.mutable.Map[String,Int],node: VertexAF,time:Int,visit :MutableList[(Int,Int,String,String,String)],couple: MutableList[(String,String)],strugglers: MutableList[(String,String)],inG: MutableList[VertexAF]) {
     var sorted_neighb=node.adjencies.sortBy(el=>el._1.vid)
-   // println("SONO IN "+node.vid)
+    //println("SONO IN "+node.vid)
     for(cand <- sorted_neighb){
      //println("HO "+cand._1.vid)
       if(!discovery.keys.exists(p => p==cand._1.vid)) {
         discovery(cand._1.vid) = discovery.count(el => true)
         couple.+=:(node.vid,cand._1.vid) //padre-> figlio
         couple.+=:(cand._1.vid,node.vid) //padre->
-        var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el => el._1.vid==cand._1.vid)
+        var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el1 => el1._1.vid==cand._1.vid && el1._2==cand._2)
+        //adJAtt.foreach(el=>println(el._1.vid,el._2))
        // println("minchia pure")
         if(adJAtt.length>0){
+         // println("FORWARD")
           visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
           if(strugglers.contains(cand._1.vid,node.vid)){
+           // println("STRUGGLERS")
             var w=inG.filter(el=>el.vid==cand._1.vid).head.adjencies.filter(el=>el._1.vid==node.vid).head._2
             visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,w,node.vid)) //TODO weight
           }
@@ -62,6 +72,8 @@ class MyGraph() extends Serializable {
 
         }
         else{
+          //println("BACKWARD ")
+          //println(cand._2)
           visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,cand._2,node.vid))
         }
         //visit.+=:((discovery(node.vid), discovery(cand._1.vid), node.vid, cand._2, cand._1.vid)) //Mancano i reverse
@@ -74,7 +86,7 @@ class MyGraph() extends Serializable {
           /*Devo verificare se forwared edges o backedges nel grafo originale*/
           //Non ho però il riferimento al grafo originale
           //println("BACKINTHEDAYS")
-          var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el => el._1.vid==cand._1.vid)
+          var adJAtt=inG.filter( el => el.vid==node.vid).head.adjencies.filter( el1 => el1._1.vid==cand._1.vid && el1._2==cand._2)
           if(adJAtt.length>0){
             visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,cand._2,cand._1.vid))
           }
@@ -84,9 +96,13 @@ class MyGraph() extends Serializable {
         }
         else{
           if(strugglers.contains(cand._1.vid,node.vid)){
+            //
+            // println(cand._1.vid,node.vid)
             var w=inG.filter(el=>el.vid==cand._1.vid).head.adjencies.filter(el=>el._1.vid==node.vid).head._2
             //strugglers=strugglers.filter(el=>el!=(cand._1.vid,node.vid))
-            visit.+=:((discovery(node.vid),discovery(cand._1.vid),node.vid,w,cand._1.vid)) ///todo cambio di posizione node/cand._1
+           // println("STRUGGLERS 2")
+           // println(visit)
+            visit.+=:((discovery(cand._1.vid),discovery(node.vid),cand._1.vid,w,node.vid)) ///todo cambio di posizione node/cand._1
           }
         }
       }
@@ -99,6 +115,8 @@ class MyGraph() extends Serializable {
   def mergeSorted(visit:MutableList[(Int,Int,String,String,String)],head:Int,tail:Int) {
     if(head<tail) {
       var mid = (head + tail) / 2
+      println("MID")
+      println(mid)
       mergeSorted(visit,head,mid)
       mergeSorted(visit,mid+1,tail)
       merge(visit,head,mid,tail)
@@ -142,41 +160,21 @@ class MyGraph() extends Serializable {
     if (a._1 < a._2 && b._1 < b._2 && a._2 < b._2) {
       return true
     }
-    else{
-      if(a._1 < a._2 && b._1 < b._2 && a._2==b._2){
-        var strA=a._3++a._4++a._5
-        var strB=b._3++b._4++b._5
-        if(strA<strB) {
-          return true
-        }
-        else{
-          return false
-        }
-      }
-    }
-    if (a._1 > a._2 && b._1 > b._2 && a._1 < b._1) {
-      return true
-    }
-    else {
-      if (a._1 > a._2 && b._1 > b._2 && a._1 == b._1){
-        var strA=a._3++a._4++a._5
-        var strB=b._3++b._4++b._5
-        if(strA<strB) {
-          return true
-        }
-        else{
-          return false
-        }
-      }
-    }
-    if (a._1 > a._2 && b._1 < b._2) {
-      if (a._1 < b._2) {
+    if (a._1 > a._2 && b._1 > b._2) {
+      if( (a._1 < b._1) || (a._1==b._1 && a._2 < b._2)) {
         return true
       }
-      else {
-        if (a._1 < a._2 && b._1 > b._2) {
-          if (a._2 <= b._1) {
-            return true
+    }
+    else {
+      if (a._1 > a._2 && b._1 < b._2) {
+        if (a._1 < b._2) {
+          return true
+        }
+        else {
+          if (a._1 < a._2 && b._1 > b._2) {
+            if (a._2 <= b._1) {
+              return true
+            }
           }
         }
       }
@@ -249,8 +247,11 @@ class MyGraph() extends Serializable {
     var couple: mutable.MutableList[(String, String)] = mutable.MutableList.empty[(String, String)]
     var S: VertexAF = null;
     var D: VertexAF = null;
+    //
+    // println("MAKING IT UNDIRECTED")
     var nodes = this.nodes
     for (el <- nodes.sortBy(el=>el.vid)) {
+
       if (un_G.nodes.count(f => f.vid == el.vid) >= 1) {
         S = un_G.nodes.filter(f => f.vid == el.vid).head
       }
@@ -283,8 +284,8 @@ class MyGraph() extends Serializable {
         }
       }
     }
-    //println("UNDIRECTED")
-   // un_G.toPrinit()
+   // println("UNDIRECTED")
+    //un_G.toPrinit()
     //println("ITSTRUGGLED")
     //strugglers.foreach(el=>println(el))
     var code = ""

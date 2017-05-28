@@ -22,6 +22,21 @@ object App extends Serializable{
     val sc = new SparkContext(conf)
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
+
+    var testG=new MyGraph()
+    //println(testG.confrontEdges((2,1,"Social","0","Urban"),(1,2,"Urban","1","Social")))
+    /*var v1=new VertexAF("U")
+    var v2=new VertexAF("M")
+    var v3=new VertexAF("S")
+    v1.addEdge(v3,"0")
+    v3.addEdge(v1,"1")
+    v2.addEdge(v1,"4")
+    testG.addNode(v1)
+    testG.addNode(v2)
+    testG.addNode(v3)
+    testG.toPrinit()
+    testG.makeItUndirect()
+    println(testG.dfscode)*/
     /*Acquiring the input*/
     println("Give me the threshold -> ")
     val thr=Console.readInt()
@@ -31,8 +46,9 @@ object App extends Serializable{
     var graph=builtGraphfromFile("data/graphGenOut0.dot")
     val frequentO=new FrequentSubG(graph,thr,size)
     /*RDD containing the frequentedges*/
-    val frequentEdges: RDD[(String,String,String)]=frequentEdgesAPP(graph,sc,thr)
+    var frequentEdges: RDD[(String,String,String)]=frequentEdgesAPP(graph,sc,thr)
     println("FREQUENT EDGES "+frequentEdges.count())
+    //frequentEdges.foreach(el=>println(el))
     /*First step generate the candidate with size at least two edges*/
     var candidateGen:RDD[MyGraph]=frequentO.candidateGeneration(frequentEdges)
 
@@ -40,6 +56,7 @@ object App extends Serializable{
 
 
     candidateGen=candidateGen.map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
+    //var candidateGen1=candidateGen.map(el=>(el.dfscode,el))
     println("LENG "+candidateGen.count())
     /*var to=candidateGen.collect()
     var total=0
@@ -66,7 +83,7 @@ object App extends Serializable{
     /*Updating the new candiateGen*/
     candidateGen=candidateGen.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
     println("dopo csp primo -> "+candidateGen.count())
-    candidateGen.foreach(el=>{println(el.dfscode+"\n");el.toPrinit()})
+    //candidateGen.foreach(el=>{println(el.dfscode+"\n");el.toPrinit()})
 
     /*Number of iterations at least two*/
     var itera=2
@@ -79,16 +96,19 @@ object App extends Serializable{
       /*Adding the DFSCode and removing the duplicate*/
       candidate2=candidate2.map(el=>el.makeItUndirect()).map(el=>(el.dfscode,el)).reduceByKey((a,b)=>a).map(el=>el._2)
       println("INTEREMEDIA lunghezza "+candidate2.count())
-      println("CANDIDATI DOPO GENERAZIONE ")
-      candidate2.collect().foreach(el=> println(el.dfscode))
-      candidate2.collect().foreach(el=> {println("\n"+el.dfscode+"\n");el.toPrinit()})
+     /* println("CANDIDATI DOPO GENERAZIONE ")*/
+     /* candidate2.collect().foreach(el=> println(el.dfscode))*/
+     // candidate2.collect().foreach(el=> {println("\n"+el.dfscode+"\n");el.toPrinit()})
       ris1=candidate2.map(el => (el.dfscode, graph, el, (frequentO.CSPMapReduce(graph, el)))).flatMap(el => el._4.map(a => (el._1, el._2, el._3, a))).map(el => (el._1, frequentO.checkGraph(el._3, el._4, el._2)))
       //ris1.foreach(el => println(el._1))
       ris1=ris1.reduceByKey((x, y) => x + y).filter(el=>el._2>= thr)
-      println("Quanto count "+ris1.count())
-      ris1.foreach(el => println(el._1))
+      //println("Quanto count "+ris1.count())
+      //ris1.foreach(el => println(el._1))
       candidatePre=candidate2.map(el => (el.dfscode, el)).join(ris1).map(ris => ris._2._1)
-      println("ZKL "+candidatePre.count())
+      println("DOPO CSPPP ")
+      println(candidatePre.count())
+      //candidatePre.foreach(el=>println(el.dfscode))
+      //println("ZKL "+candidatePre.count())
       if(candidatePre.count()!=0)
         candidateGen=candidatePre
       itera=itera+1
@@ -96,9 +116,9 @@ object App extends Serializable{
     }
 
     println("Quello che abbiamo ottenuto dopo"+itera+" iterazioni")
-    candidateGen.collect().foreach(el => println(el.dfscode))
+    //candidateGen.collect().foreach(el => println(el.dfscode))
     println("NUMBER OF SOLUTION -> "+candidateGen.count())
-
+    //candidateGen.collect().foreach(el=> el.makeItUndirect())
 
   }
   def frequentEdgesAPP(graph:MyGraphInput,sc:SparkContext,thr:Int): RDD[(String, String, String)] = {
@@ -106,11 +126,13 @@ object App extends Serializable{
     for(k <- graph.nodes){
       for(el <- k.adjencies){
         var edge:(String,String,String)=(k.label,el._1.label,el._2)
-        if(frequent.contains(edge)==false)
-          frequent+=(edge->1)
-        else{
-          var n=frequent(edge)+1
-          frequent.update(edge,n)
+        if(edge._1!=edge._2) {
+          if (frequent.contains(edge) == false)
+            frequent += (edge -> 1)
+          else {
+            var n = frequent(edge) + 1
+            frequent.update(edge, n)
+          }
         }
       }
     }

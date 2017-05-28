@@ -1,0 +1,4 @@
+/home/france/Documents/unitn/BigData/BigPP/src/main/scala/BigD/App.scala:1: error: illegal start of definition
+package BigD
+^
+one error found
