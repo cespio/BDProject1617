@@ -29,12 +29,12 @@ class MyGraphInput extends Serializable{
   def retreiveDomainCouple(edge:(String,String,String)): MutableList[(String,String)]  ={
     var tmp1=nodes.filter(n=>n.label==edge._1)
     var tmp2=nodes.filter(n=>n.label==edge._2)
-    var ret=MutableList.empty[(String,String)]
+    var ret:MutableList[(String,String)]=MutableList.empty[(String,String)]
     for(el<-tmp1){
       for(el1 <- tmp2){
         if(el.adjencies.contains(el1,edge._3)){
-          ret:+=(edge._1,el.vid)
-          ret:+=(edge._2,el1.vid)
+          ret += ((edge._1,el.vid))
+          ret += ((edge._2,el1.vid))
         }
 
       }

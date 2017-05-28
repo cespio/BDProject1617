@@ -63,7 +63,9 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       V2.addEdge(V1, couple._2._3)
       G.addNode(V1)
       G.addNode(V2)
-      listRis += (G)
+      G.maxH=Math.max(couple._1._3.toInt,couple._2._3.toInt)
+      G.minH=Math.min(couple._1._3.toInt,couple._2._3.toInt)
+      listRis +=G
 
     }
     //print(" CASO 2 ")
@@ -145,12 +147,13 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
   def complexExt(cand:MyGraph,edge:(String,String,String)): (Int,MyGraph) ={
     //TODO massimo e minimo come in data mining -> la modifica della struttura myGraph
     var candidate=cand.myclone()
-    candidate.maxH=cand.maxH
-    candidate.minH=cand.minH
+    //candidate.maxH=cand.maxH
+    //candidate.minH=cand.minH
     candidate.dfscode=cand.dfscode
     var hourPass=0
     var flag=0
     var nEdge=edge._3.toInt
+
     var sor:mutable.MutableList[VertexAF]=candidate.nodes.filter(el=> el.vid==edge._1)
     var des:mutable.MutableList[VertexAF]=candidate.nodes.filter(el=> el.vid==edge._2)
     if((candidate.maxH-candidate.minH)==4){
@@ -178,8 +181,9 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
         //ci potrebbe stare il clone come no
         //println(candidate.dfscode+" caso 1 "+edge)
         var nodo = sor.head
-        candidate.addNode(toadd)
         nodo.addEdge(toadd,edge._3)
+        candidate.addNode(toadd)
+
 
       }
       if (sor.length == 0 && des.length == 1 && flag==0) { //se matcho sorgente e non destinazione
@@ -187,11 +191,12 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
         var toadd = new VertexAF(edge._1)
         var nodo = des.head
         //println(candidate.dfscode+" caso 2 "+edge)
-        candidate.addNode(toadd)
         toadd.addEdge(nodo, edge._3)
+        candidate.addNode(toadd)
+
 
       }
-      /*if (sor.length == 1 && des.length == 1 && flag==0) { //se matcho sorgente e non destinazione
+      if (sor.length == 1 && des.length == 1 && flag==0) { //se matcho sorgente e non destinazione
 
         //devo verificare prima che non siano linkati tra di loro
         if (sor.head.adjencies.count(el => el._1.vid == des.head.vid) == 0) {
@@ -208,7 +213,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
           }*/
         }
 
-      }*/
+      }
     }
     return (flag,candidate)
   }
@@ -418,11 +423,18 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
 
     var domainCoup=mutable.MutableList.empty[mutable.MutableList[(String,String)]]
     var domainLabel=mutable.MutableList.empty[List[String]]
-
+    var temporalDom=scala.collection.mutable.HashMap.empty[String,mutable.MutableList[String]]
+    /*Cambiare quest'if*/
     var couples = toVerify.allCouples()
     for(el <- couples){
-      domainCoup+=inputGraph.retreiveDomainCouple(el)
+      if(!temporalDom.contains(el._1) && !temporalDom.contains(el._2)) {
+        var ris = inputGraph.retreiveDomainCouple(el)
+        domainCoup += ris
+        temporalDom += (el._1 -> ris.filter(p => p._1 == el._1).map(p => p._2))
+        temporalDom += (el._2 -> ris.filter(p => p._1 == el._2).map(p => p._2))
+      }
     }
+    println(temporalDom)
     var domainCoupF=domainCoup.flatten.distinct
 
     var i=0
@@ -436,8 +448,12 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       }
       i=1
     }
-
+    if (toVerify.dfscode=="01Movement1Social10Social2Movement21Urban4Social23Urban4Nature"){
+      domainLabel.foreach(el=>println(el))
+    }
+    println("Len cand "+domainLabel.map(el=>el.distinct).length)
     return domainLabel.map(el=>el.distinct)
+
   }
 
 
@@ -460,6 +476,8 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
         }
       }
     }
+    if(toVerify.dfscode=="01Movement1Social10Social2Movement21Urban4Social23Urban4Nature")
+      println("PRESO"+dom)
     return 1
   }
 }

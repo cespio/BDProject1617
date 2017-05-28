@@ -10,8 +10,8 @@ import scala.collection.mutable.MutableList
 class MyGraph() extends Serializable {
   var nodes: MutableList[VertexAF]=MutableList.empty[VertexAF];
   var dfscode: String="" /*Se la stringa è vuota DFSCode non ancora implementato*/
-  var maxH=0
-  var minH=0
+  var maxH:Int=0
+  var minH:Int=0
   def addNode(el:VertexAF) {
     nodes+:= el
   }
@@ -213,6 +213,8 @@ class MyGraph() extends Serializable {
 
   def myclone(): MyGraph = {
     var ret:MyGraph=new MyGraph()
+    ret.minH=this.minH
+    ret.maxH=this.maxH
     for(el <- this.nodes){
       var nod:VertexAF=new VertexAF(el.vid)
       ret.addNode(nod)
