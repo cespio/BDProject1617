@@ -428,21 +428,49 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
     var couples = toVerify.allCouples()
     for(el <- couples){
       if(!temporalDom.contains(el._1) && !temporalDom.contains(el._2)) {
-        var ris = inputGraph.retreiveDomainCouple(el)
-        domainCoup += ris
-        temporalDom += (el._1 -> ris.filter(p => p._1 == el._1).map(p => p._2))
-        temporalDom += (el._2 -> ris.filter(p => p._1 == el._2).map(p => p._2))
+        var ris=inputGraph.retrevieTwo(el._1,inputGraph.nodes.filter(n=>n.label==el._1).map(n=>n.vid),el._2, inputGraph.nodes.filter(n=>n.label==el._2).map(n=>n.vid),el._3)
+        //println(ris)
+        temporalDom += (el._1 -> ris.filter(p => p._1 == el._1).map(p => p._2).distinct)
+        temporalDom += (el._2 -> ris.filter(p => p._1 == el._2).map(p => p._2).distinct)
+        if(toVerify.dfscode=="10Nature18Elderly20Young16Elderly23Young20Sport")
+          println(temporalDom)
+      }
+      else{
+        if(temporalDom.contains(el._1) && !temporalDom.contains(el._2)){
+          var ris=inputGraph.retrevieTwo(el._1,temporalDom(el._1),el._2,inputGraph.nodes.filter(n=>n.label==el._2).map(n=>n.vid),el._3)
+          temporalDom += (el._1 -> ris.filter(p => p._1 == el._1).map(p => p._2).distinct)
+          temporalDom += (el._2 -> ris.filter(p => p._1 == el._2).map(p => p._2).distinct)
+          if(toVerify.dfscode=="10Nature18Elderly20Young16Elderly23Young20Sport")
+            println(temporalDom)
+        }
+        else{
+          if(!temporalDom.contains(el._1) && temporalDom.contains(el._2)){
+            var ris=inputGraph.retrevieTwo(el._1,inputGraph.nodes.filter(n=>n.label==el._1).map(n=>n.vid),el._2,temporalDom(el._2),el._3)
+            temporalDom += (el._1 -> ris.filter(p => p._1 == el._1).map(p => p._2).distinct)
+            temporalDom += (el._2 -> ris.filter(p => p._1 == el._2).map(p => p._2).distinct)
+            if(toVerify.dfscode=="10Nature18Elderly20Young16Elderly23Young20Sport")
+              println(temporalDom)
+          }
+          else{
+            var ris=inputGraph.retrevieTwo(el._1,temporalDom(el._1),el._2,temporalDom(el._2),el._3)
+            temporalDom += (el._1 -> ris.filter(p => p._1 == el._1).map(p => p._2).distinct)
+            temporalDom += (el._2 -> ris.filter(p => p._1 == el._2).map(p => p._2).distinct)
+            if(toVerify.dfscode=="10Nature18Elderly20Young16Elderly23Young20Sport")
+              println(temporalDom)
+          }
+        }
       }
     }
-    println(temporalDom)
-    var domainCoupF=domainCoup.flatten.distinct
+    //print(temporalDom)
+    //var domainCoupF=domainCoup.flatten.distinct
 
     var i=0
     for(el <- toVerify.nodes){
-      if(i==0)
-        domainLabel=domainCoupF.filter( ed => ed._1==el.vid).map(ed => List(ed._2))
+      if(i==0) {
+        domainLabel = temporalDom(el.vid).map(ed => List(ed)) //domainCoupF.filter( ed => ed._1==el.vid).map(ed => List(ed._2))
+      }
       else{
-        var tmp1=domainCoupF.filter(ed => ed._1==el.vid).map(ed => ed._2).toList
+        var tmp1=temporalDom(el.vid)//domainCoupF.filter(ed => ed._1==el.vid).map(ed => ed._2).toList
         var tmp2=domainLabel.flatMap(l1 => tmp1.map(a => l1++List(a)))
         domainLabel=tmp2
       }
@@ -452,7 +480,7 @@ class FrequentSubG (graph_arg:MyGraphInput,thr_arg:Int,size_arg:Int) extends Ser
       domainLabel.foreach(el=>println(el))
     }
     println("Len cand "+domainLabel.map(el=>el.distinct).length)
-    return domainLabel.map(el=>el.distinct)
+    return domainLabel.map(el=>el.distinct).distinct
 
   }
 

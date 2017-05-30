@@ -42,6 +42,22 @@ class MyGraphInput extends Serializable{
     return ret
   }
 
+  def retrevieTwo(sor:String,listS:MutableList[String],des:String,listD:MutableList[String],weight:String):MutableList[(String,String)]={
+    var ret:MutableList[(String,String)]=MutableList.empty[(String,String)]
+    for(el<-listS){
+      for(el1 <- listD){
+        if(this.nodes.filter(p=>p.vid==el).head.adjencies.count( k=>k._1.vid==el1 && k._2==weight)>0){ //cambiare cond
+          ret += ((sor,el))
+          ret += ((des,el1))
+        }
+
+      }
+    }
+    //println(ret)
+    return ret
+
+  }
+
   def edgeBool(ids:String,idd:String,w:String):Boolean={
     var nodeS=nodes.filter(n=>n.vid==ids).head
     return nodeS.adjencies.count(n=> n._1.vid==idd && n._2==w)==1
