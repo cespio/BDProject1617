@@ -1,10 +1,18 @@
 INTRODUCTION
 ------------
 Authours:
-*Alessandro Rizzuto 187156
-*Francesco Contaldo 190626
+
+Alessandro Rizzuto 187156
+
+Francesco Contaldo 190626
+
 Project:
+
 Data Mining Project "Frequent Pattern Mining on a single Graph"
+
+The whole work has been done exploiting the work presented here paper: Mohammed Elseidy, Ehab Abdelhamid, Spiros Skiadopoulos, and Panos Kalnis. "GRAMI: Frequent Subgraph and Pattern Mining in a Single Large Graph. PVLDB, 7(7):517-528, 2014."
+
+The core algorithms and concepts have been implemented from scratch for this university project
 
 INSTRUCTIONS
 -----------
