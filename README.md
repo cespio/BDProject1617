@@ -8,7 +8,7 @@ Francesco Contaldo 190626
 
 Project:
 
-Data Mining Project "Frequent Pattern Mining on a single Graph"
+Big Data Project "Frequent Pattern Mining on a single Graph"
 
 The whole work has been done exploiting the work presented in this paper: Mohammed Elseidy, Ehab Abdelhamid, Spiros Skiadopoulos, and Panos Kalnis. "GRAMI: Frequent Subgraph and Pattern Mining in a Single Large Graph. PVLDB, 7(7):517-528, 2014."
 
